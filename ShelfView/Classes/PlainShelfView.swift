@@ -260,7 +260,7 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         case PlainShelfView.BOOK_SOURCE_URL:
             if shelfItem.show && bookCover != "" {
                 let url = URL(string: bookCover)!
-                cell.bookCover.kf.setImage(with: url) { result in
+                cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
                     switch result {
                     case .success:
                         cell.indicator.stopAnimating()
@@ -268,7 +268,7 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
                     case .failure(let error):
                         print("Error: \(error)")
                     }
-                }
+                })
             }
             break
         case PlainShelfView.BOOK_SOURCE_RAW:
@@ -281,7 +281,7 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         default:
             if shelfItem.show && bookCover != "" {
                 let url = URL(string: "https://www.packtpub.com/sites/default/files/cover_1.png")!
-                cell.bookCover.kf.setImage(with: url) { result in
+                cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
                     switch result {
                     case .success:
                         cell.indicator.stopAnimating()
@@ -289,7 +289,7 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
                     case .failure(let error):
                         print("Error: \(error)")
                     }
-                }
+                })
             }
             break
         }
