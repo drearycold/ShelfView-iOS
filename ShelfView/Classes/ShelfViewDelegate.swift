@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import UIKit
 
 public protocol PlainShelfViewDelegate: class {
     func onBookClicked(_ shelfView: PlainShelfView, index: Int, bookId: String, bookTitle: String)
