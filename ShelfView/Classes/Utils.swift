@@ -43,9 +43,11 @@ class Utils {
     }
 
     func loadImage(name: String) -> UIImage? {
+        #if SWIFT_PACKAGE
         if let image = UIImage(named: name, in: Bundle.module, compatibleWith: nil) {
             return image
         }
+        #endif
         let podBundle = Bundle(for: Utils.self)
         if let url = podBundle.url(forResource: "ShelfView", withExtension: "bundle") {
             let bundle = Bundle(url: url)

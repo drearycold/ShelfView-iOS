@@ -12,6 +12,10 @@ class PlainShelfController: UIViewController, PlainShelfViewDelegate {
     let statusBarHeight = UIApplication.shared.statusBarFrame.height
     var bookModel = [BookModel]()
     var shelfView: PlainShelfView!
+    var recentLongPressedIndex = 0
+    override var canBecomeFirstResponder: Bool {
+        true
+    }
     @IBOutlet var motherView: UIView!
 
     override func viewDidAppear(_ animated: Bool) {
@@ -59,6 +63,21 @@ class PlainShelfController: UIViewController, PlainShelfViewDelegate {
         print("I just clicked \"\(bookTitle)\" with bookId \(bookId), at index \(index)")
     }
 
+    func onBookLongClicked(_ shelfView: PlainShelfView, index: Int, bookId: String, bookTitle: String, frame inShelfView: CGRect) {
+        print("I just clicked longer \"\(bookTitle)\" with bookId \(bookId), at index \(index)")
+        
+        recentLongPressedIndex = index
+        let sampleMenuItem = UIMenuItem(title: "SAMPLE", action: #selector(onBookLongClickedSampleMenuItem(_:)))
+        UIMenuController.shared.menuItems = [sampleMenuItem]
+        UIMenuController.shared.setTargetRect(inShelfView, in: shelfView)
+        becomeFirstResponder()
+        UIMenuController.shared.setMenuVisible(true, animated: true)
+    }
+    
+    @objc func onBookLongClickedSampleMenuItem(_ sender: Any?) {
+        print("I just clicked longer menuitem at index \(recentLongPressedIndex)")
+    }
+    
     func delay(_ delay: Double, closure: @escaping () -> ()) {
         DispatchQueue.main.asyncAfter(
             deadline: DispatchTime.now() + Double(Int64(delay * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC),

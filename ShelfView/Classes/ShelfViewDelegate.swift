@@ -10,6 +10,9 @@ import Foundation
 
 public protocol PlainShelfViewDelegate: class {
     func onBookClicked(_ shelfView: PlainShelfView, index: Int, bookId: String, bookTitle: String)
+    
+    func onBookLongClicked(_ shelfView: PlainShelfView, index: Int, bookId: String, bookTitle: String, frame inShelfView: CGRect)
+
 }
 
 public protocol SectionShelfViewDelegate: class {
