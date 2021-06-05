@@ -12,6 +12,12 @@ class SectionShelfController: UIViewController, SectionShelfViewDelegate {
     let statusBarHeight = UIApplication.shared.statusBarFrame.height
     var shelfView: SectionShelfView!
     @IBOutlet var motherView: UIView!
+    
+    var recentLongPressedSection = 0
+    var recentLongPressedIndex = 0
+    override var canBecomeFirstResponder: Bool {
+        true
+    }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -61,6 +67,23 @@ class SectionShelfController: UIViewController, SectionShelfViewDelegate {
         print("I just clicked \"\(bookTitle)\" with bookId \(bookId), at index \(index). Section details --> section \(section), sectionId \(sectionId), sectionTitle \(sectionTitle)")
     }
 
+    func onBookLongClicked(_ shelfView: SectionShelfView, section: Int, index: Int, sectionId: String, sectionTitle: String, bookId: String, bookTitle: String, frame inShelfView: CGRect) {
+        print("I just clicked longer \"\(bookTitle)\" with bookId \(bookId), at index \(index). Section details --> section \(section), sectionId \(sectionId), sectionTitle \(sectionTitle)")
+
+        recentLongPressedSection = section
+        recentLongPressedIndex = index
+
+        let sampleMenuItem = UIMenuItem(title: "SAMPLE", action: #selector(onBookLongClickedSampleMenuItem(_:)))
+        UIMenuController.shared.menuItems = [sampleMenuItem]
+        UIMenuController.shared.setTargetRect(inShelfView, in: shelfView)
+        becomeFirstResponder()
+        UIMenuController.shared.setMenuVisible(true, animated: true)
+    }
+    
+    @objc func onBookLongClickedSampleMenuItem(_ sender: Any?) {
+        print("I just clicked longer menuitem at index \(recentLongPressedSection) \(recentLongPressedIndex)")
+    }
+    
     func delay(_ delay: Double, closure: @escaping () -> ()) {
         DispatchQueue.main.asyncAfter(
             deadline: DispatchTime.now() + Double(Int64(delay * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC),

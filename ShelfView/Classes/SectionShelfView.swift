@@ -91,6 +91,12 @@ public class SectionShelfView: UIView {
         shelfView.showsVerticalScrollIndicator = false
         shelfView.showsHorizontalScrollIndicator = false
         shelfView.backgroundColor = UIColor("#C49E7A")
+        
+        let longPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(gesture:)))
+        longPressGestureRecognizer.delegate = self
+        longPressGestureRecognizer.delaysTouchesBegan = true
+        shelfView.addGestureRecognizer(longPressGestureRecognizer)
+        
         addSubview(shelfView)
         
         layout.minimumLineSpacing = 0
@@ -246,6 +252,21 @@ public class SectionShelfView: UIView {
         shelfModelSection.append(ShelfModelSection(sectionName: "", sectionId: "", sectionShelf: shelfModelArray))
         shelfView.reloadData()
     }
+    
+    @objc func handleLongPress(gesture: UILongPressGestureRecognizer?) {
+        guard let gesture = gesture, gesture.state == .began else { return }
+        print("Long Pressed")
+        let location = gesture.location(in: shelfView)
+        if let indexPath = shelfView.indexPathForItem(at: location), let cell = shelfView.cellForItem(at: indexPath) {
+            let sectionItem = shelfModelSection[indexPath.section]
+            let shelfItem = sectionItem.sectionShelf[indexPath.item]
+            if shelfItem.show {
+                let frameInSuperView = shelfView.convert(cell.frame, to: self)
+                delegate.onBookLongClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
+                
+            }
+        }
+    }
 }
 
 extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -386,4 +407,6 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
             delegate.onBookClicked(self, section: section, index: position, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle)
         }
     }
+}
+extension SectionShelfView: UIGestureRecognizerDelegate {
 }
