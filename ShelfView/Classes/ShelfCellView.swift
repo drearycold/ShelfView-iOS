@@ -14,6 +14,8 @@ class ShelfCellView: UICollectionViewCell {
     var bookCover = UIImageView()
     let indicator = UIActivityIndicatorView()
     let spine = UIImageView()
+    let options = UIButton()
+    let progress = UILabel()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -24,6 +26,8 @@ class ShelfCellView: UICollectionViewCell {
         bookBackground.addSubview(bookCover)
         bookBackground.addSubview(spine)
         bookBackground.addSubview(indicator)
+        bookBackground.addSubview(options)
+        bookBackground.addSubview(progress)
         
         bookCover.layer.shadowColor = UIColor.black.cgColor
         bookCover.layer.shadowRadius = 10
@@ -33,8 +37,26 @@ class ShelfCellView: UICollectionViewCell {
         indicator.color = .magenta
         spine.image = Utils().loadImage(name: "spine")
         spine.isHidden = true
+        
+        options.setImage(Utils().loadImage(name: "options"), for: .normal)
+        options.imageView?.contentMode = .scaleAspectFit
+        options.isHidden = false
+        
+        progress.textAlignment = .right
+        progress.adjustsFontSizeToFitWidth = false
+        progress.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        progress.adjustsFontForContentSizeCategory = true
+        progress.baselineAdjustment = .alignCenters
+        progress.textColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.9)
+        progress.isHidden = false
+        progress.layer.backgroundColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 0.4).cgColor
+        progress.layer.cornerRadius = 8
+        progress.layer.masksToBounds = true
+        
         shelfBackground.isUserInteractionEnabled = true
         bookCover.isUserInteractionEnabled = true
+        
+        
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -44,4 +66,5 @@ class ShelfCellView: UICollectionViewCell {
     static var identifier: String {
         return String(describing: self)
     }
+    
 }

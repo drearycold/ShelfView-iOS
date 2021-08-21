@@ -114,11 +114,11 @@ public class PlainShelfView: UIView {
     }
     
     private func loadEmptyShelfBlocks(type: String) {
-        shelfModel.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: type))
+        shelfModel.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: type))
     }
     
-    private func loadFilledShelfBlocks(bookCoverSource: String, bookId: String, bookTitle: String, type: String) {
-        shelfModel.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, show: true, type: type))
+    private func loadFilledShelfBlocks(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, type: String) {
+        shelfModel.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, show: true, type: type))
     }
     
     public func reloadBooks(bookModel: [BookModel]) {
@@ -138,14 +138,22 @@ public class PlainShelfView: UIView {
             let bookCoverSource = bookModel[i].bookCoverSource
             let bookId = bookModel[i].bookId
             let bookTitle = bookModel[i].bookTitle
+            let bookProgress = bookModel[i].bookProgress
             
+            var type = PlainShelfView.CENTER
             if (i % numberOfTilesPerRow) == 0 {
-                loadFilledShelfBlocks(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, type: PlainShelfView.START)
+                type = PlainShelfView.START
             } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                loadFilledShelfBlocks(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, type: PlainShelfView.END)
-            } else {
-                loadFilledShelfBlocks(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, type: PlainShelfView.CENTER)
+                type = PlainShelfView.END
             }
+            
+            loadFilledShelfBlocks(
+                bookCoverSource: bookCoverSource,
+                bookId: bookId,
+                bookTitle: bookTitle,
+                bookProgress: bookProgress,
+                type: type
+            )
         }
         
         buildShelf(sizeOfModel: bookModel.count)
@@ -317,6 +325,19 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         cell.bookBackground.isHidden = !shelfItem.show
         cell.spine.frame = CGRect(x: CGFloat(bookCoverMargin) / 2, y: CGFloat(bookCoverMargin), width: spineWidth, height: cell.bookCover.frame.height)
         
+        cell.options.frame = CGRect(x: cell.bookCover.frame.maxX - 48, y: cell.bookCover.frame.maxY - 36, width: 64, height: 32)
+        cell.options.removeTarget(nil, action: nil, for: .touchUpInside)
+        cell.options.addTarget(self, action: #selector(optionsActionPlain(sender:)), for: .touchUpInside)
+        cell.options.tag = position
+        
+//        cell.options.addAction(UIAction(title: "OPTIONS", image: nil, identifier: UIAction.Identifier("TAP"), discoverabilityTitle: nil, attributes: [], state: .on, handler: { action in
+//            let frameInSuperView = self.shelfView.convert(cell.frame, to: self)
+//            delegate.onBookLongClicked(self, index: position, bookId: shelfModel[position].bookId, bookTitle: shelfModel[position].bookTitle, frame: frameInSuperView)
+//        }), for: .touchUpInside)
+        
+        cell.progress.text = "\(shelfItem.bookProgress)%"
+        cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)
+        
         return cell
     }
     
@@ -328,6 +349,20 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         let position = indexPath.row
         if shelfModel[position].show {
             delegate.onBookClicked(self, index: position, bookId: shelfModel[position].bookId, bookTitle: shelfModel[position].bookTitle)
+        }
+    }
+    
+    
+    @objc func optionsActionPlain(sender: UIButton) {
+        print("optionsActionPlain \(sender.tag)")
+        let position = sender.tag
+        let indexPath = IndexPath(row: position, section: 0)
+        if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
+            let shelfItem = shelfModel[indexPath.row]
+            if shelfItem.show {
+                let frameInSuperView = cell.convert(cell.options.frame, to: self)
+                delegate.onBookOptionsClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
+            }
         }
     }
 }

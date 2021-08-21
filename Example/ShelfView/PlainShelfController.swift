@@ -30,27 +30,27 @@ class PlainShelfController: UIViewController, PlainShelfViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        bookModel.append(BookModel(bookCoverSource: "http://www.aidanf.net/images/learn-swift/cover-web.png", bookId: "0", bookTitle: "Learn Swift"))
-        bookModel.append(BookModel(bookCoverSource: "https://images-na.ssl-images-amazon.com/images/I/41bUdNhz6pL._SX346_BO1,204,203,200_.jpg", bookId: "1", bookTitle: "Beginning iOS"))
-        bookModel.append(BookModel(bookCoverSource: "https://www.packtpub.com/sites/default/files/1414OS_5764_Mastering%20Swift%203%20-%20Linux.jpg", bookId: "2", bookTitle: "Mastering Swift 3 - Linux"))
-        bookModel.append(BookModel(bookCoverSource: "https://files.kerching.raywenderlich.com/uploads/c7f72825-5849-4d76-ba21-8d9486296119.png", bookId: "3", bookTitle: "iOS Apprentice"))
+        bookModel.append(BookModel(bookCoverSource: "http://www.aidanf.net/images/learn-swift/cover-web.png", bookId: "0", bookTitle: "Learn Swift", bookProgress: 10))
+        bookModel.append(BookModel(bookCoverSource: "https://images-na.ssl-images-amazon.com/images/I/41bUdNhz6pL._SX346_BO1,204,203,200_.jpg", bookId: "1", bookTitle: "Beginning iOS", bookProgress: 20))
+        bookModel.append(BookModel(bookCoverSource: "https://www.packtpub.com/sites/default/files/1414OS_5764_Mastering%20Swift%203%20-%20Linux.jpg", bookId: "2", bookTitle: "Mastering Swift 3 - Linux", bookProgress: 30))
+        bookModel.append(BookModel(bookCoverSource: "https://files.kerching.raywenderlich.com/uploads/c7f72825-5849-4d76-ba21-8d9486296119.png", bookId: "3", bookTitle: "iOS Apprentice", bookProgress: 40))
 
         shelfView = PlainShelfView(frame: CGRect(x: 0, y: statusBarHeight, width: 350, height: 500), bookModel: bookModel, bookSource: PlainShelfView.BOOK_SOURCE_URL)
 
         delay(3) {
             let books = [
-                BookModel(bookCoverSource: "https://www.packtpub.com/sites/default/files/5723cov_.png", bookId: "4", bookTitle: "Learning Xcode 8"),
-                BookModel(bookCoverSource: "https://files.kerching.raywenderlich.com/uploads/bc41c949-c745-455e-8922-1b196fcf5e80.png", bookId: "5", bookTitle: "iOS Animations"),
-                BookModel(bookCoverSource: "http://www.appsmith.dk/wp-content/uploads/2014/12/cover-small.jpg", bookId: "6", bookTitle: "Beginning iOS Development")
+                BookModel(bookCoverSource: "https://www.packtpub.com/sites/default/files/5723cov_.png", bookId: "4", bookTitle: "Learning Xcode 8", bookProgress: 50),
+                BookModel(bookCoverSource: "https://files.kerching.raywenderlich.com/uploads/bc41c949-c745-455e-8922-1b196fcf5e80.png", bookId: "5", bookTitle: "iOS Animations", bookProgress: 55),
+                BookModel(bookCoverSource: "http://www.appsmith.dk/wp-content/uploads/2014/12/cover-small.jpg", bookId: "6", bookTitle: "Beginning iOS Development", bookProgress: 60)
             ]
             self.shelfView.addBooks(bookModel: books)
         }
 
         delay(5) {
             let books = [
-                BookModel(bookCoverSource: "https://codewithchris.com/img/SwiftCourseThumbnail_v2.jpg", bookId: "7", bookTitle: "How To Make iPhone Apps"),
-                BookModel(bookCoverSource: "http://whatpixel.com/images/2016/08/learning-swift-book-cover.jpg", bookId: "8", bookTitle: "Learning Swift"),
-                BookModel(bookCoverSource: "https://www.packtpub.com/sites/default/files/9781785288197.png", bookId: "9", bookTitle: "Learning iOS UI Development")
+                BookModel(bookCoverSource: "https://codewithchris.com/img/SwiftCourseThumbnail_v2.jpg", bookId: "7", bookTitle: "How To Make iPhone Apps", bookProgress: 70),
+                BookModel(bookCoverSource: "http://whatpixel.com/images/2016/08/learning-swift-book-cover.jpg", bookId: "8", bookTitle: "Learning Swift", bookProgress: 75),
+                BookModel(bookCoverSource: "https://www.packtpub.com/sites/default/files/9781785288197.png", bookId: "9", bookTitle: "Learning iOS UI Development", bookProgress: 80)
             ]
             self.shelfView.addBooks(bookModel: books)
         }
@@ -76,6 +76,16 @@ class PlainShelfController: UIViewController, PlainShelfViewDelegate {
     
     @objc func onBookLongClickedSampleMenuItem(_ sender: Any?) {
         print("I just clicked longer menuitem at index \(recentLongPressedIndex)")
+    }
+    
+    func onBookOptionsClicked(_ shelfView: PlainShelfView, index: Int, bookId: String, bookTitle: String, frame inShelfView: CGRect) {
+        print("I just clicked options \"\(bookTitle)\" with bookId \(bookId), at index \(index)")
+        
+        let sampleMenuItem = UIMenuItem(title: "SAMPLE", action: #selector(onBookLongClickedSampleMenuItem(_:)))
+        UIMenuController.shared.menuItems = [sampleMenuItem]
+        UIMenuController.shared.setTargetRect(inShelfView, in: shelfView)
+        becomeFirstResponder()
+        UIMenuController.shared.setMenuVisible(true, animated: true)
     }
     
     func delay(_ delay: Double, closure: @escaping () -> ()) {
