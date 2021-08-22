@@ -16,6 +16,7 @@
     "tag": "1.1"
   },
   "social_media_url": "https://twitter.com/tdscientist",
+  "swift_versions": "4.2",
   "platforms": {
     "ios": "10.0"
   },
@@ -28,7 +29,8 @@
   "frameworks": "UIKit",
   "dependencies": {
     "Kingfisher": [
-      "~> 5.0"
+      "~> 5.15"
     ]
-  }
+  },
+  "swift_version": "4.2"
 }
