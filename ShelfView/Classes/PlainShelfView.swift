@@ -114,11 +114,11 @@ public class PlainShelfView: UIView {
     }
     
     private func loadEmptyShelfBlocks(type: String) {
-        shelfModel.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: type))
+        shelfModel.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, bookStatus: .READY, show: false, type: type))
     }
     
-    private func loadFilledShelfBlocks(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, type: String) {
-        shelfModel.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, show: true, type: type))
+    private func loadFilledShelfBlocks(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, bookStatus: BookModel.BookStatus, type: String) {
+        shelfModel.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, bookStatus: bookStatus, show: true, type: type))
     }
     
     public func reloadBooks(bookModel: [BookModel]) {
@@ -139,6 +139,7 @@ public class PlainShelfView: UIView {
             let bookId = bookModel[i].bookId
             let bookTitle = bookModel[i].bookTitle
             let bookProgress = bookModel[i].bookProgress
+            let bookStatus = bookModel[i].bookStatus
             
             var type = PlainShelfView.CENTER
             if (i % numberOfTilesPerRow) == 0 {
@@ -152,6 +153,7 @@ public class PlainShelfView: UIView {
                 bookId: bookId,
                 bookTitle: bookTitle,
                 bookProgress: bookProgress,
+                bookStatus: bookStatus,
                 type: type
             )
         }

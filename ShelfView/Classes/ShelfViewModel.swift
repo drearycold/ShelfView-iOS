@@ -9,16 +9,25 @@
 import Foundation
 
 public struct BookModel {
+    public enum BookStatus: String {
+        case READY
+        case HASUPDATE
+        case UPDATING
+        case DOWNLOADING
+    }
+    
     var bookCoverSource: String
     var bookId: String
     var bookTitle: String
     var bookProgress: Int
+    var bookStatus: BookStatus
 
-    public init(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int) {
+    public init(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, bookStatus: BookStatus) {
         self.bookCoverSource = bookCoverSource
         self.bookId = bookId
         self.bookTitle = bookTitle
         self.bookProgress = bookProgress
+        self.bookStatus = bookStatus
         if self.bookProgress < 0 {
             self.bookProgress = 0
         }
@@ -54,15 +63,27 @@ struct ShelfModel {
     var bookId: String
     var bookTitle: String
     var bookProgress: Int
-
+    var bookStatus: BookModel.BookStatus
+    
     var show: Bool
     var type: String
 
-    public init(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, show: Bool, type: String) {
+    public init() {
+        bookCoverSource = ""
+        bookId = ""
+        bookTitle = ""
+        bookProgress = 0
+        bookStatus = .READY
+        show = false
+        type = ""
+    }
+    
+    public init(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, bookStatus: BookModel.BookStatus, show: Bool, type: String) {
         self.bookCoverSource = bookCoverSource
         self.bookId = bookId
         self.bookTitle = bookTitle
         self.bookProgress = bookProgress
+        self.bookStatus = bookStatus
         if self.bookProgress < 0 {
             self.bookProgress = 0
         }

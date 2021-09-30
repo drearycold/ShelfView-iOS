@@ -141,18 +141,24 @@ public class SectionShelfView: UIView {
             var shelfModelArray = [ShelfModel]()
             
             for j in 0 ..< sectionBooksCount {
-                let bookCoverSource = sectionBooks[j].bookCoverSource
-                let bookId = sectionBooks[j].bookId
-                let bookTitle = sectionBooks[j].bookTitle
-                let bookProgress = sectionBooks[j].bookProgress
+                var shelfModel = ShelfModel(
+                    bookCoverSource: sectionBooks[j].bookCoverSource,
+                    bookId: sectionBooks[j].bookId,
+                    bookTitle: sectionBooks[j].bookTitle,
+                    bookProgress: sectionBooks[j].bookProgress,
+                    bookStatus: sectionBooks[j].bookStatus,
+                    show: true,
+                    type: ""
+                )
                 
                 if (j % numberOfTilesPerRow) == 0 {
-                    shelfModelArray.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, show: true, type: SectionShelfView.START))
+                    shelfModel.type = SectionShelfView.START
                 } else if (j % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                    shelfModelArray.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, show: true, type: SectionShelfView.END))
+                    shelfModel.type = SectionShelfView.END
                 } else {
-                    shelfModelArray.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, show: true, type: SectionShelfView.CENTER))
+                    shelfModel.type = SectionShelfView.CENTER
                 }
+                shelfModelArray.append(shelfModel)
                 
                 if j == (sectionBooksCount - 1) {
                     var numberOfRows = sectionBooksCount / numberOfTilesPerRow
@@ -162,11 +168,13 @@ public class SectionShelfView: UIView {
                         numberOfRows = numberOfRows + 1
                         let fillUp = numberOfTilesPerRow - remainderTiles
                         for i in 0 ..< fillUp {
+                            var shelfModel = ShelfModel()
                             if i == (fillUp - 1) {
-                                shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: SectionShelfView.END))
+                                shelfModel.type = SectionShelfView.END
                             } else {
-                                shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: SectionShelfView.CENTER))
+                                shelfModel.type = SectionShelfView.CENTER
                             }
+                            shelfModelArray.append(shelfModel)
                         }
                     }
                     cummulativeShelfHeight += (numberOfRows * gridItemHeight) + Int(headerReferenceSizeHeight)
@@ -179,24 +187,28 @@ public class SectionShelfView: UIView {
                     
                     if remainderRowHeight == 0 {
                         for i in 0 ..< numberOfTilesPerRow {
-                            var type = SectionShelfView.CENTER
+                            var shelfModel = ShelfModel()
                             if i == 0 {
-                                type = SectionShelfView.START
+                                shelfModel.type = SectionShelfView.START
                             } else if i == (numberOfTilesPerRow - 1) {
-                                type = SectionShelfView.END
+                                shelfModel.type = SectionShelfView.END
+                            } else {
+                                shelfModel.type = SectionShelfView.CENTER
                             }
-                            shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: type))
+                            shelfModelArray.append(shelfModel)
                         }
                     } else if remainderRowHeight > 0 {
                         let fillUp = numberOfTilesPerRow * (remainderRowHeight + 1)
                         for i in 0 ..< fillUp {
-                            var type = SectionShelfView.CENTER
+                            var shelfModel = ShelfModel()
                             if (i % numberOfTilesPerRow) == 0 {
-                                type = SectionShelfView.START
+                                shelfModel.type = SectionShelfView.START
                             } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                                type = SectionShelfView.END
+                                shelfModel.type = SectionShelfView.END
+                            } else {
+                                shelfModel.type = SectionShelfView.CENTER
                             }
-                            shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: type))
+                            shelfModelArray.append(shelfModel)
                         }
                     }
                 }
@@ -217,11 +229,13 @@ public class SectionShelfView: UIView {
             numberOfRows = numberOfRows + 1
             let fillUp = numberOfTilesPerRow - remainderTiles
             for i in 0 ..< fillUp {
+                var shelfModel = ShelfModel()
                 if i == (fillUp - 1) {
-                    shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: SectionShelfView.END))
+                    shelfModel.type = SectionShelfView.END
                 } else {
-                    shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: SectionShelfView.CENTER))
+                    shelfModel.type = SectionShelfView.CENTER
                 }
+                shelfModelArray.append(shelfModel)
             }
         }
         
@@ -230,24 +244,28 @@ public class SectionShelfView: UIView {
             
             if remainderRowHeight == 0 {
                 for i in 0 ..< numberOfTilesPerRow {
+                    var shelfModel = ShelfModel()
                     if i == 0 {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: SectionShelfView.START))
+                        shelfModel.type = SectionShelfView.START
                     } else if i == (numberOfTilesPerRow - 1) {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: SectionShelfView.END))
+                        shelfModel.type = SectionShelfView.END
                     } else {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: SectionShelfView.CENTER))
+                        shelfModel.type = SectionShelfView.CENTER
                     }
+                    shelfModelArray.append(shelfModel)
                 }
             } else if remainderRowHeight > 0 {
                 let fillUp = numberOfTilesPerRow * (remainderRowHeight + 1)
                 for i in 0 ..< fillUp {
+                    var shelfModel = ShelfModel()
                     if (i % numberOfTilesPerRow) == 0 {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: SectionShelfView.START))
+                        shelfModel.type = SectionShelfView.START
                     } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: SectionShelfView.END))
+                        shelfModel.type = SectionShelfView.END
                     } else {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, show: false, type: SectionShelfView.CENTER))
+                        shelfModel.type = SectionShelfView.CENTER
                     }
+                    shelfModelArray.append(shelfModel)
                 }
             }
         }
@@ -378,11 +396,35 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
         cell.bookBackground.isHidden = !shelfItem.show
         cell.spine.frame = CGRect(x: CGFloat(bookCoverMargin) / 2, y: CGFloat(bookCoverMargin), width: spineWidth, height: cell.bookCover.frame.height)
         
+        let bookIdHash = shelfItem.bookId.hashValue
+        optionsButtonTagMap[bookIdHash] = indexPath
+
         cell.options.frame = CGRect(x: cell.bookCover.frame.maxX - 48, y: cell.bookCover.frame.maxY - 36, width: 64, height: 32)
         cell.options.removeTarget(nil, action: nil, for: .touchUpInside)
         cell.options.addTarget(self, action: #selector(optionsActionSection(sender:)), for: .touchUpInside)
-        cell.options.tag = shelfItem.bookId.hashValue
-        optionsButtonTagMap[cell.options.tag] = indexPath
+        cell.options.tag = bookIdHash
+        
+        cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX, y: cell.bookCover.frame.maxY - 36, width: 64, height: 32)
+        cell.refresh.removeTarget(nil, action: nil, for: .touchUpInside)
+        cell.refresh.addTarget(self, action: #selector(refreshActionSection(sender:)), for: .touchUpInside)
+        cell.refresh.tag = bookIdHash
+        
+        switch (shelfItem.bookStatus) {
+        case .READY:
+            cell.refresh.backgroundColor = UIColor.green
+            break
+        case .HASUPDATE:
+            cell.refresh.backgroundColor = UIColor.red
+            break
+        case .UPDATING:
+            cell.refresh.backgroundColor = UIColor.yellow
+            break
+        case .DOWNLOADING:
+            cell.refresh.backgroundColor = UIColor.blue
+            break
+        }
+        
+        
         
         cell.progress.text = "\(shelfItem.bookProgress)%"
         cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)
@@ -428,8 +470,22 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
             let shelfItem = sectionItem.sectionShelf[indexPath.item]
             if shelfItem.show {
                 let frameInSuperView = cell.convert(cell.options.frame, to: self)
-                delegate.onBookOptionsClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
                 
+                delegate.onBookLongClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
+                
+            }
+        }
+    }
+    
+    @objc func refreshActionSection(sender: UIButton) {
+        guard let indexPath = optionsButtonTagMap[sender.tag] else { return }
+        print("refreshActionSection \(indexPath)")
+        if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
+            let sectionItem = shelfModelSection[indexPath.section]
+            let shelfItem = sectionItem.sectionShelf[indexPath.item]
+            if shelfItem.show {
+                let frameInSuperView = cell.convert(cell.options.frame, to: self)
+                delegate.onBookRefreshClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
             }
         }
     }

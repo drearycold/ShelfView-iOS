@@ -16,6 +16,7 @@ class ShelfCellView: UICollectionViewCell {
     let spine = UIImageView()
     let options = UIButton()
     let progress = UILabel()
+    let refresh = UIButton()
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -28,6 +29,7 @@ class ShelfCellView: UICollectionViewCell {
         bookBackground.addSubview(indicator)
         bookBackground.addSubview(options)
         bookBackground.addSubview(progress)
+        bookBackground.addSubview(refresh)
         
         bookCover.layer.shadowColor = UIColor.black.cgColor
         bookCover.layer.shadowRadius = 10
@@ -41,7 +43,11 @@ class ShelfCellView: UICollectionViewCell {
         options.setImage(Utils().loadImage(name: "options"), for: .normal)
         options.imageView?.contentMode = .scaleAspectFit
         options.isHidden = false
-        
+
+        refresh.setImage(Utils().loadImage(name: "options"), for: .normal)
+        refresh.imageView?.contentMode = .scaleAspectFit
+        refresh.isHidden = false
+
         progress.textAlignment = .right
         progress.adjustsFontSizeToFitWidth = false
         progress.font = UIFont.systemFont(ofSize: 16, weight: .regular)
