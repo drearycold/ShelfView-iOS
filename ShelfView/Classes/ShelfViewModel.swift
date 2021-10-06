@@ -11,6 +11,7 @@ import Foundation
 public struct BookModel {
     public enum BookStatus: String {
         case READY
+        case NOCONNECT
         case HASUPDATE
         case UPDATING
         case DOWNLOADING

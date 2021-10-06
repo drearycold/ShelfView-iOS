@@ -337,6 +337,13 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
 //            delegate.onBookLongClicked(self, index: position, bookId: shelfModel[position].bookId, bookTitle: shelfModel[position].bookTitle, frame: frameInSuperView)
 //        }), for: .touchUpInside)
         
+        cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX + 8, y: cell.bookCover.frame.maxY - 32, width: 32, height: 24)
+        cell.refresh.removeTarget(nil, action: nil, for: .touchUpInside)
+        cell.refresh.addTarget(self, action: #selector(refreshActionSection(sender:)), for: .touchUpInside)
+        cell.refresh.tag = position
+
+        cell.refresh.setImage(Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())"), for: .normal)
+
         cell.progress.text = "\(shelfItem.bookProgress)%"
         cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)
         
@@ -364,6 +371,19 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
             if shelfItem.show {
                 let frameInSuperView = cell.convert(cell.options.frame, to: self)
                 delegate.onBookOptionsClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
+            }
+        }
+    }
+    
+    @objc func refreshActionSection(sender: UIButton) {
+        print("refreshActionSection \(sender.tag)")
+        let position = sender.tag
+        let indexPath = IndexPath(row: position, section: 0)
+        if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
+            let shelfItem = shelfModel[indexPath.row]
+            if shelfItem.show {
+                let frameInSuperView = cell.convert(cell.options.frame, to: self)
+                delegate.onBookRefreshClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
             }
         }
     }

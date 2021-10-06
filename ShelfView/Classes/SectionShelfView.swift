@@ -404,27 +404,12 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
         cell.options.addTarget(self, action: #selector(optionsActionSection(sender:)), for: .touchUpInside)
         cell.options.tag = bookIdHash
         
-        cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX, y: cell.bookCover.frame.maxY - 36, width: 64, height: 32)
+        cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX + 8, y: cell.bookCover.frame.maxY - 32, width: 32, height: 24)
         cell.refresh.removeTarget(nil, action: nil, for: .touchUpInside)
         cell.refresh.addTarget(self, action: #selector(refreshActionSection(sender:)), for: .touchUpInside)
         cell.refresh.tag = bookIdHash
-        
-        switch (shelfItem.bookStatus) {
-        case .READY:
-            cell.refresh.backgroundColor = UIColor.green
-            break
-        case .HASUPDATE:
-            cell.refresh.backgroundColor = UIColor.red
-            break
-        case .UPDATING:
-            cell.refresh.backgroundColor = UIColor.yellow
-            break
-        case .DOWNLOADING:
-            cell.refresh.backgroundColor = UIColor.blue
-            break
-        }
-        
-        
+
+        cell.refresh.setImage(Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())"), for: .normal)
         
         cell.progress.text = "\(shelfItem.bookProgress)%"
         cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)

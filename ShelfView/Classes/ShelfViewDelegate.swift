@@ -15,6 +15,9 @@ public protocol PlainShelfViewDelegate: class {
     func onBookLongClicked(_ shelfView: PlainShelfView, index: Int, bookId: String, bookTitle: String, frame inShelfView: CGRect)
 
     func onBookOptionsClicked(_ shelfView: PlainShelfView, index: Int, bookId: String, bookTitle: String, frame inShelfView: CGRect)
+    
+    func onBookRefreshClicked(_ shelfView: PlainShelfView, index: Int, bookId: String, bookTitle: String, frame inShelfView: CGRect)
+
 }
 
 public protocol SectionShelfViewDelegate: class {

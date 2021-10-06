@@ -44,10 +44,12 @@ class ShelfCellView: UICollectionViewCell {
         options.imageView?.contentMode = .scaleAspectFit
         options.isHidden = false
 
-        refresh.setImage(Utils().loadImage(name: "options"), for: .normal)
         refresh.imageView?.contentMode = .scaleAspectFit
         refresh.isHidden = false
-
+        refresh.layer.backgroundColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 0.6).cgColor
+        refresh.layer.cornerRadius = 8
+        refresh.layer.masksToBounds = true
+        
         progress.textAlignment = .right
         progress.adjustsFontSizeToFitWidth = false
         progress.font = UIFont.systemFont(ofSize: 16, weight: .regular)
