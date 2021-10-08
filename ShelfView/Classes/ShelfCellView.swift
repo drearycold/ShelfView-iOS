@@ -46,8 +46,8 @@ class ShelfCellView: UICollectionViewCell {
 
         refresh.imageView?.contentMode = .scaleAspectFit
         refresh.isHidden = false
-        refresh.layer.backgroundColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 0.6).cgColor
-        refresh.layer.cornerRadius = 8
+        refresh.layer.backgroundColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 0.3).cgColor
+        refresh.layer.cornerRadius = 4
         refresh.layer.masksToBounds = true
         
         progress.textAlignment = .right

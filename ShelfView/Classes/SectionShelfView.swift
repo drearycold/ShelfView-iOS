@@ -404,12 +404,15 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
         cell.options.addTarget(self, action: #selector(optionsActionSection(sender:)), for: .touchUpInside)
         cell.options.tag = bookIdHash
         
-        cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX + 8, y: cell.bookCover.frame.maxY - 32, width: 32, height: 24)
+        cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX + 12, y: cell.bookCover.frame.maxY - 28, width: 20, height: 24)
         cell.refresh.removeTarget(nil, action: nil, for: .touchUpInside)
         cell.refresh.addTarget(self, action: #selector(refreshActionSection(sender:)), for: .touchUpInside)
         cell.refresh.tag = bookIdHash
 
-        cell.refresh.setImage(Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())"), for: .normal)
+        cell.refresh.setImage(
+            Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())")?
+                .resizableImage(withCapInsets: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2), resizingMode: .stretch),
+            for: .normal)
         
         cell.progress.text = "\(shelfItem.bookProgress)%"
         cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)
