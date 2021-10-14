@@ -15,6 +15,7 @@ public struct BookModel {
         case HASUPDATE
         case UPDATING
         case DOWNLOADING
+        case LOCAL
     }
     
     var bookCoverSource: String
