@@ -414,7 +414,11 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
                 .resizableImage(withCapInsets: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2), resizingMode: .stretch),
             for: .normal)
         
-        cell.progress.text = "\(shelfItem.bookProgress)%"
+        if shelfItem.bookProgress >= 100 {
+            cell.progress.text = "FIN"
+        } else {
+            cell.progress.text = "\(shelfItem.bookProgress)%"
+        }
         cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)
 
         return cell
