@@ -147,6 +147,7 @@ public class SectionShelfView: UIView {
                     bookTitle: sectionBooks[j].bookTitle,
                     bookProgress: sectionBooks[j].bookProgress,
                     bookStatus: sectionBooks[j].bookStatus,
+                    sectionId: sectionId,
                     show: true,
                     type: ""
                 )

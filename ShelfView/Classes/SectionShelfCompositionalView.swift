@@ -10,6 +10,8 @@ import Kingfisher
 import UIKit
 
 public class SectionShelfCompositionalView: UIView {
+    static let sectionHeaderElementKind = "section-header-element-kind"
+
     private let indicatorWidth = Double(50)
     private let bookCoverMargin = Double(10)
     private let spineWidth = CGFloat(8)
@@ -33,11 +35,14 @@ public class SectionShelfCompositionalView: UIView {
     private var bookSource = BOOK_SOURCE_URL
     
     private var numberOfTilesPerRow: Int!
+    private var numberOfRowsPerScreen: Int!
     private var shelfHeight: Int!
     private var shelfWidth: Int!
     private let gridItemWidth = Dimens.gridItemWidth
     private let gridItemHeight = Dimens.gridItemHeight
     private var shelfView: UICollectionView!
+    private var shelfViewDataSource: UICollectionViewDiffableDataSource<ShelfModelSection, ShelfModel>! = nil
+
     private var trueGridItemWidth: Double!
     
     private let utils = Utils()
@@ -56,15 +61,6 @@ public class SectionShelfCompositionalView: UIView {
         initializeShelfView(width: frame.width, height: frame.height)
     }
     
-    public convenience init(frame: CGRect, bookModelSection: [BookModelSection], bookSource: Int) {
-        self.init(frame: frame)
-        utils.delay(0) {
-            self.bookSource = bookSource
-            self.bookModelSection = bookModelSection
-            self.processData()
-        }
-    }
-    
     public override func layoutSubviews() {
         super.layoutSubviews()
         if viewHasBeenInitialized {
@@ -73,8 +69,18 @@ public class SectionShelfCompositionalView: UIView {
             shelfView.frame = CGRect(x: 0, y: 0, width: width, height: height)
             shelfWidth = Int(shelfView.frame.width)
             shelfHeight = Int(shelfView.frame.height)
+
             numberOfTilesPerRow = shelfWidth / gridItemWidth
             trueGridItemWidth = Double(shelfWidth) / Double(numberOfTilesPerRow)
+
+            if shelfWidth % gridItemWidth > 0 {
+                numberOfTilesPerRow += 1
+            }
+
+            numberOfRowsPerScreen = shelfHeight / gridItemHeight
+            if shelfHeight % gridItemHeight > 0 {
+                numberOfRowsPerScreen += 1
+            }
 //            layout.itemSize = CGSize(width: trueGridItemWidth, height: Double(gridItemHeight))
 //            layout.headerReferenceSize = CGSize(width: shelfView.frame.width, height: headerReferenceSizeHeight)
             shelfView.collectionViewLayout.invalidateLayout()
@@ -84,9 +90,157 @@ public class SectionShelfCompositionalView: UIView {
     
     private func initializeShelfView(width: CGFloat, height: CGFloat) {
         shelfView = UICollectionView(frame: CGRect(x: 0, y: 0, width: width, height: height), collectionViewLayout: createLayout())
-        shelfView.register(ShelfCellView.self, forCellWithReuseIdentifier: ShelfCellView.identifier)
-        shelfView.register(ShelfHeaderCellView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: ShelfHeaderCellView.identifier)
-        shelfView.dataSource = self
+//        shelfView.register(ShelfCellView.self, forCellWithReuseIdentifier: ShelfCellView.identifier)
+//        shelfView.register(ShelfHeaderCellView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: ShelfHeaderCellView.identifier)
+    
+        //configure data source
+        let cellRegistration = UICollectionView.CellRegistration<ShelfCellView, ShelfModel> { [self] cell, indexPath, item in
+            let shelfItem = item
+            let bookCover = shelfItem.bookCoverSource.trim()
+            
+            cell.shelfBackground.frame = CGRect(x: 0, y: 0, width: trueGridItemWidth, height: Double(gridItemHeight))
+            cell.shelfBackground.contentMode = .scaleToFill
+            
+            switch shelfItem.type {
+            case SectionShelfCompositionalView.START:
+                cell.shelfBackground.image = utils.loadImage(name: "left")
+                break
+            case SectionShelfCompositionalView.END:
+                cell.shelfBackground.image = utils.loadImage(name: "right")
+                break
+            default:
+                cell.shelfBackground.image = utils.loadImage(name: "center")
+                break
+            }
+            
+            cell.bookCover.kf.indicatorType = .none
+            cell.bookBackground.frame = CGRect(x: (trueGridItemWidth - Dimens.bookWidth) / 2, y: bookBackgroundMarignTop, width: Dimens.bookWidth, height: Dimens.bookHeight)
+            cell.bookCover.frame = CGRect(x: bookCoverMargin / 2, y: bookCoverMargin, width: Dimens.bookWidth - bookCoverMargin, height: Dimens.bookHeight - bookCoverMargin)
+            cell.indicator.frame = CGRect(x: (Dimens.bookWidth - indicatorWidth) / 2, y: (Dimens.bookHeight - indicatorWidth) / 2, width: indicatorWidth, height: indicatorWidth)
+            cell.indicator.startAnimating()
+            
+            switch bookSource {
+            case SectionShelfView.BOOK_SOURCE_DEVICE_CACHE:
+                if shelfItem.show && bookCover != "" {
+                    let paths = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true)
+                    if let dirPath = paths.first {
+                        let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
+                        let image = UIImage(contentsOfFile: imageURL.path)
+                        cell.bookCover.image = image
+                        cell.indicator.stopAnimating()
+                        cell.spine.isHidden = false
+                    }
+                }
+                break
+            case SectionShelfView.BOOK_SOURCE_DEVICE_LIBRARY:
+                if shelfItem.show && bookCover != "" {
+                    let paths = NSSearchPathForDirectoriesInDomains(.libraryDirectory, .userDomainMask, true)
+                    if let dirPath = paths.first {
+                        let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
+                        let image = UIImage(contentsOfFile: imageURL.path)
+                        cell.bookCover.image = image
+                        cell.indicator.stopAnimating()
+                        cell.spine.isHidden = false
+                    }
+                }
+                break
+            case SectionShelfView.BOOK_SOURCE_DEVICE_DOCUMENTS:
+                if shelfItem.show && bookCover != "" {
+                    let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
+                    if let dirPath = paths.first {
+                        let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
+                        let image = UIImage(contentsOfFile: imageURL.path)
+                        cell.bookCover.image = image
+                        cell.indicator.stopAnimating()
+                        cell.spine.isHidden = false
+                    }
+                }
+                break
+            case SectionShelfView.BOOK_SOURCE_URL:
+                if shelfItem.show && bookCover != "" {
+                    let url = URL(string: bookCover)!
+                    cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
+                        switch result {
+                        case .success:
+                            cell.indicator.stopAnimating()
+                            cell.spine.isHidden = false
+                        case .failure(let error):
+                            print("Error: \(error)")
+                        }
+                    })
+                }
+                break
+            case SectionShelfView.BOOK_SOURCE_RAW:
+                if shelfItem.show && bookCover != "" {
+                    cell.bookCover.image = UIImage(named: bookCover)
+                    cell.indicator.stopAnimating()
+                    cell.spine.isHidden = false
+                }
+                break
+            default:
+                if shelfItem.show && bookCover != "" {
+                    let url = URL(string: "https://www.packtpub.com/sites/default/files/cover_1.png")!
+                    cell.bookCover.kf.setImage(with: url, completionHandler: { result in
+                        switch result {
+                        case .success:
+                            cell.indicator.stopAnimating()
+                            cell.spine.isHidden = false
+                        case .failure(let error):
+                            print("Error: \(error)")
+                        }
+                    })
+                }
+                break
+            }
+            
+            cell.bookBackground.isHidden = !shelfItem.show
+            cell.spine.frame = CGRect(x: CGFloat(bookCoverMargin) / 2, y: CGFloat(bookCoverMargin), width: spineWidth, height: cell.bookCover.frame.height)
+            
+            let bookIdHash = shelfItem.bookId.hashValue
+            optionsButtonTagMap[bookIdHash] = indexPath
+
+            cell.options.frame = CGRect(x: cell.bookCover.frame.maxX - 48, y: cell.bookCover.frame.maxY - 36, width: 64, height: 32)
+            cell.options.removeTarget(nil, action: nil, for: .touchUpInside)
+            cell.options.addTarget(self, action: #selector(optionsActionSection(sender:)), for: .touchUpInside)
+            cell.options.tag = bookIdHash
+            
+            cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX + 12, y: cell.bookCover.frame.maxY - 28, width: 20, height: 24)
+            cell.refresh.removeTarget(nil, action: nil, for: .touchUpInside)
+            cell.refresh.addTarget(self, action: #selector(refreshActionSection(sender:)), for: .touchUpInside)
+            cell.refresh.tag = bookIdHash
+
+            cell.refresh.setImage(
+                Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())")?
+                    .resizableImage(withCapInsets: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2), resizingMode: .stretch),
+                for: .normal)
+            
+            if shelfItem.bookProgress >= 100 {
+                cell.progress.text = "FIN"
+            } else {
+                cell.progress.text = "\(shelfItem.bookProgress)%"
+            }
+            cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)
+
+        }
+        let headerRegistration = UICollectionView.SupplementaryRegistration
+        <ShelfHeaderCellView>(elementKind: SectionShelfCompositionalView.sectionHeaderElementKind) {
+            header, elementKind, indexPath in
+            header.header.frame = CGRect(x: 0, y: 0, width: header.frame.width, height: header.frame.height)
+            header.headerLabel.frame = CGRect(x: 0, y: 0, width: header.frame.width, height: header.frame.height)
+            header.headerLabel.text = self.shelfModelSection[indexPath.section].sectionName
+        }
+        shelfViewDataSource = UICollectionViewDiffableDataSource<ShelfModelSection, ShelfModel>(collectionView: shelfView) {
+            (collectionView: UICollectionView, indexPath: IndexPath, identifier: ShelfModel) -> UICollectionViewCell? in
+            return collectionView.dequeueConfiguredReusableCell(using: cellRegistration, for: indexPath, item: identifier)
+        }
+        shelfViewDataSource.supplementaryViewProvider = { (view, kind, index) in
+            return self.shelfView.dequeueConfiguredReusableSupplementary(
+                using: headerRegistration, for: index)
+        }
+        shelfView.dataSource = shelfViewDataSource
+        
+        
+//        shelfView.dataSource = self
         shelfView.delegate = self
         shelfView.alwaysBounceVertical = false
         shelfView.bounces = false
@@ -115,6 +269,8 @@ public class SectionShelfCompositionalView: UIView {
         shelfView.collectionViewLayout.invalidateLayout()
         
         buildSingleSectionShelf(sizeOfModel: 0)
+        
+        
         viewHasBeenInitialized = true
     }
     private func createLayout() -> UICollectionViewLayout {
@@ -130,16 +286,23 @@ public class SectionShelfCompositionalView: UIView {
             
             let group = NSCollectionLayoutGroup.horizontal(
                 layoutSize: NSCollectionLayoutSize(
-                    widthDimension: .absolute(CGFloat(Dimens.gridItemWidth)),
+                    widthDimension: .absolute(CGFloat(self.trueGridItemWidth)),
                     heightDimension: .absolute(CGFloat(Dimens.gridItemHeight))
                 ),
                 subitems: [item]
             )
-            group.interItemSpacing = .flexible(10.0)
+            group.interItemSpacing = .fixed(0.0)
             let section = NSCollectionLayoutSection(group: group)
             section.orthogonalScrollingBehavior = .continuous
             
+            let headerFooterSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
+                                                         heightDimension: .estimated(32))
+            let sectionHeader = NSCollectionLayoutBoundarySupplementaryItem(
+                layoutSize: headerFooterSize,
+                elementKind: SectionShelfCompositionalView.sectionHeaderElementKind, alignment: .top)
             
+            section.boundarySupplementaryItems = [sectionHeader]
+
             return section
         }
         
@@ -147,18 +310,9 @@ public class SectionShelfCompositionalView: UIView {
     }
     public func reloadBooks(bookModelSection: [BookModelSection]) {
         self.bookModelSection = bookModelSection
-        processData()
-    }
-    
-    public func addBooks(bookModelSection: [BookModelSection]) {
-        self.bookModelSection = self.bookModelSection + bookModelSection
-        processData()
-    }
-    
-    private func processData() {
+        
         shelfModelSection.removeAll()
         optionsButtonTagMap.removeAll(keepingCapacity: true)
-        var cummulativeShelfHeight = 0
         
         for i in 0 ..< bookModelSection.count {
             let sectionItem = bookModelSection[i]
@@ -175,40 +329,43 @@ public class SectionShelfCompositionalView: UIView {
                     bookTitle: sectionBooks[j].bookTitle,
                     bookProgress: sectionBooks[j].bookProgress,
                     bookStatus: sectionBooks[j].bookStatus,
+                    sectionId: sectionId,
                     show: true,
                     type: ""
                 )
                 
-                if (j % numberOfTilesPerRow) == 0 {
+                if j == 0 {
                     shelfModel.type = SectionShelfCompositionalView.START
-                } else if (j % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
+                } else if j == sectionBooksCount - 1 {
                     shelfModel.type = SectionShelfCompositionalView.END
                 } else {
                     shelfModel.type = SectionShelfCompositionalView.CENTER
                 }
                 shelfModelArray.append(shelfModel)
                 
-                if j == (sectionBooksCount - 1) {
-                    var numberOfRows = sectionBooksCount / numberOfTilesPerRow
-                    let remainderTiles = sectionBooksCount % numberOfTilesPerRow
-                    
-                    if remainderTiles > 0 {
-                        numberOfRows = numberOfRows + 1
-                        let fillUp = numberOfTilesPerRow - remainderTiles
-                        for i in 0 ..< fillUp {
-                            var shelfModel = ShelfModel()
-                            if i == (fillUp - 1) {
-                                shelfModel.type = SectionShelfCompositionalView.END
-                            } else {
-                                shelfModel.type = SectionShelfCompositionalView.CENTER
-                            }
-                            shelfModelArray.append(shelfModel)
-                        }
-                    }
-                    cummulativeShelfHeight += (numberOfRows * gridItemHeight) + Int(headerReferenceSizeHeight)
-                }
+//                if j == (sectionBooksCount - 1) {
+//                    var numberOfRows = sectionBooksCount / numberOfTilesPerRow
+//                    let remainderTiles = sectionBooksCount % numberOfTilesPerRow
+//
+//                    if remainderTiles > 0 {
+//                        numberOfRows = numberOfRows + 1
+//                        let fillUp = numberOfTilesPerRow - remainderTiles
+//                        for i in 0 ..< fillUp {
+//                            var shelfModel = ShelfModel()
+//                            if i == (fillUp - 1) {
+//                                shelfModel.type = SectionShelfCompositionalView.END
+//                            } else {
+//                                shelfModel.type = SectionShelfCompositionalView.CENTER
+//                            }
+//                            shelfModelArray.append(shelfModel)
+//                        }
+//                    }
+//                    cummulativeShelfHeight += (numberOfRows * gridItemHeight) + Int(headerReferenceSizeHeight)
+//                }
             }
             
+            let cummulativeShelfHeight = (bookModelSection.count * gridItemHeight) + Int(headerReferenceSizeHeight)
+
             if i == (bookModelSection.count - 1) {
                 if cummulativeShelfHeight < shelfHeight {
                     let remainderRowHeight = (shelfHeight - cummulativeShelfHeight) / gridItemHeight
@@ -223,6 +380,8 @@ public class SectionShelfCompositionalView: UIView {
                             } else {
                                 shelfModel.type = SectionShelfCompositionalView.CENTER
                             }
+                            shelfModel.sectionId = sectionId
+                            shelfModel.bookId = "remainder-\(i)"
                             shelfModelArray.append(shelfModel)
                         }
                     } else if remainderRowHeight > 0 {
@@ -236,6 +395,8 @@ public class SectionShelfCompositionalView: UIView {
                             } else {
                                 shelfModel.type = SectionShelfCompositionalView.CENTER
                             }
+                            shelfModel.sectionId = sectionId
+                            shelfModel.bookId = "remainder-\(i)"
                             shelfModelArray.append(shelfModel)
                         }
                     }
@@ -245,61 +406,42 @@ public class SectionShelfCompositionalView: UIView {
             shelfModelSection.append(ShelfModelSection(sectionName: sectionName, sectionId: sectionId, sectionShelf: shelfModelArray))
         }
         
-        shelfView.reloadData()
+        var snapshot = NSDiffableDataSourceSnapshot<ShelfModelSection, ShelfModel>()
+        shelfModelSection.forEach { section in
+            snapshot.appendSections([section])
+            print("snapshot.appendItems(section.sectionShelf) \(section.sectionShelf)")
+            snapshot.appendItems(section.sectionShelf)
+        }
+        shelfViewDataSource.apply(snapshot, animatingDifferences: true)
     }
     
     private func buildSingleSectionShelf(sizeOfModel: Int) {
-        var numberOfRows = sizeOfModel / numberOfTilesPerRow
-        let remainderTiles = sizeOfModel % numberOfTilesPerRow
-        var shelfModelArray = [ShelfModel]()
-        
-        if remainderTiles > 0 {
-            numberOfRows = numberOfRows + 1
-            let fillUp = numberOfTilesPerRow - remainderTiles
+        for row in 0..<(numberOfRowsPerScreen ?? 9) {
+            var shelfModelArray = [ShelfModel]()
+
+            let fillUp = numberOfTilesPerRow ?? 9
             for i in 0 ..< fillUp {
                 var shelfModel = ShelfModel()
-                if i == (fillUp - 1) {
+                if i == 0 {
+                    shelfModel.type = SectionShelfCompositionalView.START
+                } else if i == (fillUp - 1) {
                     shelfModel.type = SectionShelfCompositionalView.END
                 } else {
                     shelfModel.type = SectionShelfCompositionalView.CENTER
                 }
+                shelfModel.bookId = "row-\(row)-\(i)"
                 shelfModelArray.append(shelfModel)
             }
+            shelfModelSection.append(ShelfModelSection(sectionName: "", sectionId: "section-\(row)", sectionShelf: shelfModelArray))
         }
         
-        if ((numberOfRows * gridItemHeight) + Int(headerReferenceSizeHeight)) < shelfHeight {
-            let remainderRowHeight = (shelfHeight - ((numberOfRows * gridItemHeight) + Int(headerReferenceSizeHeight))) / gridItemHeight
-            
-            if remainderRowHeight == 0 {
-                for i in 0 ..< numberOfTilesPerRow {
-                    var shelfModel = ShelfModel()
-                    if i == 0 {
-                        shelfModel.type = SectionShelfCompositionalView.START
-                    } else if i == (numberOfTilesPerRow - 1) {
-                        shelfModel.type = SectionShelfCompositionalView.END
-                    } else {
-                        shelfModel.type = SectionShelfCompositionalView.CENTER
-                    }
-                    shelfModelArray.append(shelfModel)
-                }
-            } else if remainderRowHeight > 0 {
-                let fillUp = numberOfTilesPerRow * (remainderRowHeight + 1)
-                for i in 0 ..< fillUp {
-                    var shelfModel = ShelfModel()
-                    if (i % numberOfTilesPerRow) == 0 {
-                        shelfModel.type = SectionShelfCompositionalView.START
-                    } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                        shelfModel.type = SectionShelfCompositionalView.END
-                    } else {
-                        shelfModel.type = SectionShelfCompositionalView.CENTER
-                    }
-                    shelfModelArray.append(shelfModel)
-                }
-            }
+//        shelfView.reloadData()
+        var snapshot = NSDiffableDataSourceSnapshot<ShelfModelSection, ShelfModel>()
+        shelfModelSection.forEach { section in
+            snapshot.appendSections([section])
+            snapshot.appendItems(section.sectionShelf)
         }
-        
-        shelfModelSection.append(ShelfModelSection(sectionName: "", sectionId: "", sectionShelf: shelfModelArray))
-        shelfView.reloadData()
+        shelfViewDataSource.apply(snapshot, animatingDifferences: true)
     }
     
     @objc func handleLongPress(gesture: UILongPressGestureRecognizer?) {
@@ -318,152 +460,7 @@ public class SectionShelfCompositionalView: UIView {
     }
 }
 
-extension SectionShelfCompositionalView: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
-    public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let section = indexPath.section
-        let position = indexPath.row
-        let shelfItem = shelfModelSection[section].sectionShelf[position]
-        let bookCover = shelfItem.bookCoverSource.trim()
-        
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ShelfCellView.identifier, for: indexPath) as! ShelfCellView
-        cell.shelfBackground.frame = CGRect(x: 0, y: 0, width: trueGridItemWidth, height: Double(gridItemHeight))
-        cell.shelfBackground.contentMode = .scaleToFill
-        
-        switch shelfItem.type {
-        case SectionShelfCompositionalView.START:
-            cell.shelfBackground.image = utils.loadImage(name: "left")
-            break
-        case SectionShelfCompositionalView.END:
-            cell.shelfBackground.image = utils.loadImage(name: "right")
-            break
-        default:
-            cell.shelfBackground.image = utils.loadImage(name: "center")
-            break
-        }
-        
-        cell.bookCover.kf.indicatorType = .none
-        cell.bookBackground.frame = CGRect(x: (trueGridItemWidth - Dimens.bookWidth) / 2, y: bookBackgroundMarignTop, width: Dimens.bookWidth, height: Dimens.bookHeight)
-        cell.bookCover.frame = CGRect(x: bookCoverMargin / 2, y: bookCoverMargin, width: Dimens.bookWidth - bookCoverMargin, height: Dimens.bookHeight - bookCoverMargin)
-        cell.indicator.frame = CGRect(x: (Dimens.bookWidth - indicatorWidth) / 2, y: (Dimens.bookHeight - indicatorWidth) / 2, width: indicatorWidth, height: indicatorWidth)
-        cell.indicator.startAnimating()
-        
-        switch bookSource {
-        case SectionShelfView.BOOK_SOURCE_DEVICE_CACHE:
-            if shelfItem.show && bookCover != "" {
-                let paths = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true)
-                if let dirPath = paths.first {
-                    let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
-                    let image = UIImage(contentsOfFile: imageURL.path)
-                    cell.bookCover.image = image
-                    cell.indicator.stopAnimating()
-                    cell.spine.isHidden = false
-                }
-            }
-            break
-        case SectionShelfView.BOOK_SOURCE_DEVICE_LIBRARY:
-            if shelfItem.show && bookCover != "" {
-                let paths = NSSearchPathForDirectoriesInDomains(.libraryDirectory, .userDomainMask, true)
-                if let dirPath = paths.first {
-                    let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
-                    let image = UIImage(contentsOfFile: imageURL.path)
-                    cell.bookCover.image = image
-                    cell.indicator.stopAnimating()
-                    cell.spine.isHidden = false
-                }
-            }
-            break
-        case SectionShelfView.BOOK_SOURCE_DEVICE_DOCUMENTS:
-            if shelfItem.show && bookCover != "" {
-                let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-                if let dirPath = paths.first {
-                    let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
-                    let image = UIImage(contentsOfFile: imageURL.path)
-                    cell.bookCover.image = image
-                    cell.indicator.stopAnimating()
-                    cell.spine.isHidden = false
-                }
-            }
-            break
-        case SectionShelfView.BOOK_SOURCE_URL:
-            if shelfItem.show && bookCover != "" {
-                let url = URL(string: bookCover)!
-                cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
-                    switch result {
-                    case .success:
-                        cell.indicator.stopAnimating()
-                        cell.spine.isHidden = false
-                    case .failure(let error):
-                        print("Error: \(error)")
-                    }
-                })
-            }
-            break
-        case SectionShelfView.BOOK_SOURCE_RAW:
-            if shelfItem.show && bookCover != "" {
-                cell.bookCover.image = UIImage(named: bookCover)
-                cell.indicator.stopAnimating()
-                cell.spine.isHidden = false
-            }
-            break
-        default:
-            if shelfItem.show && bookCover != "" {
-                let url = URL(string: "https://www.packtpub.com/sites/default/files/cover_1.png")!
-                cell.bookCover.kf.setImage(with: url, completionHandler: { result in
-                    switch result {
-                    case .success:
-                        cell.indicator.stopAnimating()
-                        cell.spine.isHidden = false
-                    case .failure(let error):
-                        print("Error: \(error)")
-                    }
-                })
-            }
-            break
-        }
-        
-        cell.bookBackground.isHidden = !shelfItem.show
-        cell.spine.frame = CGRect(x: CGFloat(bookCoverMargin) / 2, y: CGFloat(bookCoverMargin), width: spineWidth, height: cell.bookCover.frame.height)
-        
-        let bookIdHash = shelfItem.bookId.hashValue
-        optionsButtonTagMap[bookIdHash] = indexPath
-
-        cell.options.frame = CGRect(x: cell.bookCover.frame.maxX - 48, y: cell.bookCover.frame.maxY - 36, width: 64, height: 32)
-        cell.options.removeTarget(nil, action: nil, for: .touchUpInside)
-        cell.options.addTarget(self, action: #selector(optionsActionSection(sender:)), for: .touchUpInside)
-        cell.options.tag = bookIdHash
-        
-        cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX + 12, y: cell.bookCover.frame.maxY - 28, width: 20, height: 24)
-        cell.refresh.removeTarget(nil, action: nil, for: .touchUpInside)
-        cell.refresh.addTarget(self, action: #selector(refreshActionSection(sender:)), for: .touchUpInside)
-        cell.refresh.tag = bookIdHash
-
-        cell.refresh.setImage(
-            Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())")?
-                .resizableImage(withCapInsets: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2), resizingMode: .stretch),
-            for: .normal)
-        
-        if shelfItem.bookProgress >= 100 {
-            cell.progress.text = "FIN"
-        } else {
-            cell.progress.text = "\(shelfItem.bookProgress)%"
-        }
-        cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)
-
-        return cell
-    }
-    
-    public func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        if kind == UICollectionView.elementKindSectionHeader {
-            let reusableView = collectionView.dequeueReusableSupplementaryView(ofKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: ShelfHeaderCellView.identifier, for: indexPath) as! ShelfHeaderCellView
-            
-            reusableView.header.frame = CGRect(x: 0, y: 0, width: reusableView.frame.width, height: reusableView.frame.height)
-            reusableView.headerLabel.frame = CGRect(x: 0, y: 0, width: reusableView.frame.width, height: reusableView.frame.height)
-            reusableView.headerLabel.text = shelfModelSection[indexPath.section].sectionName
-            return reusableView
-        }
-        return UICollectionReusableView()
-    }
-    
+extension SectionShelfCompositionalView: UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
     public func numberOfSections(in collectionView: UICollectionView) -> Int {
         return shelfModelSection.count
     }

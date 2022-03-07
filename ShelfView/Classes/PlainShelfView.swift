@@ -114,11 +114,11 @@ public class PlainShelfView: UIView {
     }
     
     private func loadEmptyShelfBlocks(type: String) {
-        shelfModel.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, bookStatus: .READY, show: false, type: type))
+        shelfModel.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, bookStatus: .READY, sectionId: "", show: false, type: type))
     }
     
     private func loadFilledShelfBlocks(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, bookStatus: BookModel.BookStatus, type: String) {
-        shelfModel.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, bookStatus: bookStatus, show: true, type: type))
+        shelfModel.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, bookStatus: bookStatus, sectionId: "default", show: true, type: type))
     }
     
     public func reloadBooks(bookModel: [BookModel]) {
