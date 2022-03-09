@@ -60,7 +60,7 @@ public struct BookModelSection {
     }
 }
 
-struct ShelfModel: Hashable {
+public struct ShelfModel: Hashable {
     var bookCoverSource: String
     var bookId: String
     var bookTitle: String
@@ -71,9 +71,13 @@ struct ShelfModel: Hashable {
     var show: Bool
     var type: String
 
-    func hash(into hasher: inout Hasher) {
+    public func hash(into hasher: inout Hasher) {
         hasher.combine(bookId)
         hasher.combine(sectionId)
+    }
+    
+    public static func == (lhs: ShelfModel, rhs: ShelfModel) -> Bool {
+        lhs.bookId == rhs.bookId && lhs.sectionId == rhs.sectionId
     }
     
     public init() {
@@ -107,11 +111,19 @@ struct ShelfModel: Hashable {
     }
 }
 
-struct ShelfModelSection: Hashable {
+public struct ShelfModelSection: Hashable {
     var sectionName: String
     var sectionId: String
     var sectionShelf: [ShelfModel]
 
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(sectionId)
+    }
+    
+    public static func == (lhs: ShelfModelSection, rhs: ShelfModelSection) -> Bool {
+        lhs.sectionId == rhs.sectionId
+    }
+    
     public init(sectionName: String, sectionId: String, sectionShelf: [ShelfModel]) {
         self.sectionName = sectionName
         self.sectionId = sectionId

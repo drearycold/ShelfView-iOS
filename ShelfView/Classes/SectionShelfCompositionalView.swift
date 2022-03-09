@@ -13,8 +13,6 @@ public class SectionShelfCompositionalView: UIView {
     static let sectionHeaderElementKind = "section-header-element-kind"
 
     private let indicatorWidth = Double(50)
-    private let bookCoverMargin = Double(10)
-    private let spineWidth = CGFloat(8)
     private let bookBackgroundMarignTop = Double(23)
     private let headerReferenceSizeHeight = CGFloat(50)
     
@@ -28,8 +26,8 @@ public class SectionShelfCompositionalView: UIView {
     private static let END = "end"
     private static let CENTER = "center"
     
-    private var bookModelSection = [BookModelSection]()
     private var shelfModelSection = [ShelfModelSection]()
+    private var shelfSectionItemWidth = [Double]()
     private var optionsButtonTagMap = [Int:IndexPath]()
     
     private var bookSource = BOOK_SOURCE_URL
@@ -61,45 +59,55 @@ public class SectionShelfCompositionalView: UIView {
         initializeShelfView(width: frame.width, height: frame.height)
     }
     
+    private func updateGeo() {
+        let width = frame.width
+        let height = frame.height
+        shelfView.frame = CGRect(x: 0, y: 0, width: width, height: height)
+        shelfWidth = Int(shelfView.frame.width)
+        shelfHeight = Int(shelfView.frame.height)
+
+        numberOfTilesPerRow = shelfWidth / gridItemWidth
+        trueGridItemWidth = Double(gridItemWidth + Dimens.gridSpacing)
+
+        if shelfWidth % gridItemWidth > 0 {
+            numberOfTilesPerRow += 1
+        }
+
+        numberOfRowsPerScreen = shelfHeight / gridItemHeight
+        if shelfHeight % gridItemHeight > 0 {
+            numberOfRowsPerScreen += 1
+        }
+    }
+    
     public override func layoutSubviews() {
         super.layoutSubviews()
         if viewHasBeenInitialized {
-            let width = frame.width
-            let height = frame.height
-            shelfView.frame = CGRect(x: 0, y: 0, width: width, height: height)
-            shelfWidth = Int(shelfView.frame.width)
-            shelfHeight = Int(shelfView.frame.height)
-
-            numberOfTilesPerRow = shelfWidth / gridItemWidth
-            trueGridItemWidth = Double(shelfWidth) / Double(numberOfTilesPerRow)
-
-            if shelfWidth % gridItemWidth > 0 {
-                numberOfTilesPerRow += 1
-            }
-
-            numberOfRowsPerScreen = shelfHeight / gridItemHeight
-            if shelfHeight % gridItemHeight > 0 {
-                numberOfRowsPerScreen += 1
-            }
-//            layout.itemSize = CGSize(width: trueGridItemWidth, height: Double(gridItemHeight))
-//            layout.headerReferenceSize = CGSize(width: shelfView.frame.width, height: headerReferenceSizeHeight)
+            updateGeo()
             shelfView.collectionViewLayout.invalidateLayout()
-            reloadBooks(bookModelSection: bookModelSection)
+        }
+    }
+    
+    public func resize(to size: CGSize) {
+        if viewHasBeenInitialized {
+            updateGeo()
+            
+            for sectionIndex in 0..<min(shelfSectionItemWidth.count, shelfModelSection.count) {
+                if self.shelfModelSection[sectionIndex].sectionShelf.count * Int(self.trueGridItemWidth ?? 0) < self.shelfWidth {
+                    self.shelfSectionItemWidth[sectionIndex] = Double(self.shelfWidth) / Double(self.shelfModelSection[sectionIndex].sectionShelf.count)
+                }
+            }
+            
+            shelfView.collectionViewLayout.invalidateLayout()
         }
     }
     
     private func initializeShelfView(width: CGFloat, height: CGFloat) {
         shelfView = UICollectionView(frame: CGRect(x: 0, y: 0, width: width, height: height), collectionViewLayout: createLayout())
-//        shelfView.register(ShelfCellView.self, forCellWithReuseIdentifier: ShelfCellView.identifier)
-//        shelfView.register(ShelfHeaderCellView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: ShelfHeaderCellView.identifier)
     
         //configure data source
         let cellRegistration = UICollectionView.CellRegistration<ShelfCellView, ShelfModel> { [self] cell, indexPath, item in
             let shelfItem = item
             let bookCover = shelfItem.bookCoverSource.trim()
-            
-            cell.shelfBackground.frame = CGRect(x: 0, y: 0, width: trueGridItemWidth, height: Double(gridItemHeight))
-            cell.shelfBackground.contentMode = .scaleToFill
             
             switch shelfItem.type {
             case SectionShelfCompositionalView.START:
@@ -114,9 +122,6 @@ public class SectionShelfCompositionalView: UIView {
             }
             
             cell.bookCover.kf.indicatorType = .none
-            cell.bookBackground.frame = CGRect(x: (trueGridItemWidth - Dimens.bookWidth) / 2, y: bookBackgroundMarignTop, width: Dimens.bookWidth, height: Dimens.bookHeight)
-            cell.bookCover.frame = CGRect(x: bookCoverMargin / 2, y: bookCoverMargin, width: Dimens.bookWidth - bookCoverMargin, height: Dimens.bookHeight - bookCoverMargin)
-            cell.indicator.frame = CGRect(x: (Dimens.bookWidth - indicatorWidth) / 2, y: (Dimens.bookHeight - indicatorWidth) / 2, width: indicatorWidth, height: indicatorWidth)
             cell.indicator.startAnimating()
             
             switch bookSource {
@@ -194,17 +199,14 @@ public class SectionShelfCompositionalView: UIView {
             }
             
             cell.bookBackground.isHidden = !shelfItem.show
-            cell.spine.frame = CGRect(x: CGFloat(bookCoverMargin) / 2, y: CGFloat(bookCoverMargin), width: spineWidth, height: cell.bookCover.frame.height)
             
             let bookIdHash = shelfItem.bookId.hashValue
             optionsButtonTagMap[bookIdHash] = indexPath
 
-            cell.options.frame = CGRect(x: cell.bookCover.frame.maxX - 48, y: cell.bookCover.frame.maxY - 36, width: 64, height: 32)
             cell.options.removeTarget(nil, action: nil, for: .touchUpInside)
             cell.options.addTarget(self, action: #selector(optionsActionSection(sender:)), for: .touchUpInside)
             cell.options.tag = bookIdHash
             
-            cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX + 12, y: cell.bookCover.frame.maxY - 28, width: 20, height: 24)
             cell.refresh.removeTarget(nil, action: nil, for: .touchUpInside)
             cell.refresh.addTarget(self, action: #selector(refreshActionSection(sender:)), for: .touchUpInside)
             cell.refresh.tag = bookIdHash
@@ -219,14 +221,11 @@ public class SectionShelfCompositionalView: UIView {
             } else {
                 cell.progress.text = "\(shelfItem.bookProgress)%"
             }
-            cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)
 
         }
         let headerRegistration = UICollectionView.SupplementaryRegistration
         <ShelfHeaderCellView>(elementKind: SectionShelfCompositionalView.sectionHeaderElementKind) {
             header, elementKind, indexPath in
-            header.header.frame = CGRect(x: 0, y: 0, width: header.frame.width, height: header.frame.height)
-            header.headerLabel.frame = CGRect(x: 0, y: 0, width: header.frame.width, height: header.frame.height)
             header.headerLabel.text = self.shelfModelSection[indexPath.section].sectionName
         }
         shelfViewDataSource = UICollectionViewDiffableDataSource<ShelfModelSection, ShelfModel>(collectionView: shelfView) {
@@ -239,8 +238,6 @@ public class SectionShelfCompositionalView: UIView {
         }
         shelfView.dataSource = shelfViewDataSource
         
-        
-//        shelfView.dataSource = self
         shelfView.delegate = self
         shelfView.alwaysBounceVertical = false
         shelfView.bounces = false
@@ -255,21 +252,14 @@ public class SectionShelfCompositionalView: UIView {
         
         addSubview(shelfView)
         
-//        layout.minimumLineSpacing = 0
-//        layout.minimumInteritemSpacing = 0
-//        layout.sectionInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
-        
         shelfWidth = Int(shelfView.frame.width)
         shelfHeight = Int(shelfView.frame.height)
         numberOfTilesPerRow = shelfWidth / gridItemWidth
-        trueGridItemWidth = Double(shelfWidth) / Double(numberOfTilesPerRow)
+        trueGridItemWidth = Double(gridItemWidth + Dimens.gridSpacing)
         
-//        layout.itemSize = CGSize(width: trueGridItemWidth, height: Double(gridItemHeight))
-//        layout.headerReferenceSize = CGSize(width: shelfView.frame.width, height: headerReferenceSizeHeight)
         shelfView.collectionViewLayout.invalidateLayout()
         
         buildSingleSectionShelf(sizeOfModel: 0)
-        
         
         viewHasBeenInitialized = true
     }
@@ -284,9 +274,16 @@ public class SectionShelfCompositionalView: UIView {
                 )
             )
             
+            var itemWidth = self.trueGridItemWidth ?? 0
+            if sectionIndex < self.shelfModelSection.count,
+               self.shelfModelSection[sectionIndex].sectionShelf.count * Int(itemWidth) < self.shelfWidth {
+                itemWidth = Double(self.shelfWidth) / Double(self.shelfModelSection[sectionIndex].sectionShelf.count)
+            }
+            self.shelfSectionItemWidth[sectionIndex] = itemWidth
+            
             let group = NSCollectionLayoutGroup.horizontal(
                 layoutSize: NSCollectionLayoutSize(
-                    widthDimension: .absolute(CGFloat(self.trueGridItemWidth)),
+                    widthDimension: .absolute(CGFloat(itemWidth)),
                     heightDimension: .absolute(CGFloat(Dimens.gridItemHeight))
                 ),
                 subitems: [item]
@@ -296,7 +293,7 @@ public class SectionShelfCompositionalView: UIView {
             section.orthogonalScrollingBehavior = .continuous
             
             let headerFooterSize = NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0),
-                                                         heightDimension: .estimated(32))
+                                                         heightDimension: .absolute(32))
             let sectionHeader = NSCollectionLayoutBoundarySupplementaryItem(
                 layoutSize: headerFooterSize,
                 elementKind: SectionShelfCompositionalView.sectionHeaderElementKind, alignment: .top)
@@ -308,118 +305,35 @@ public class SectionShelfCompositionalView: UIView {
         
         return layout
     }
-    public func reloadBooks(bookModelSection: [BookModelSection]) {
-        self.bookModelSection = bookModelSection
-        
-        shelfModelSection.removeAll()
-        optionsButtonTagMap.removeAll(keepingCapacity: true)
-        
-        for i in 0 ..< bookModelSection.count {
-            let sectionItem = bookModelSection[i]
-            let sectionName = sectionItem.sectionName
-            let sectionId = sectionItem.sectionId
-            let sectionBooks = sectionItem.sectionBooks
-            let sectionBooksCount = sectionBooks.count
-            var shelfModelArray = [ShelfModel]()
-            
-            for j in 0 ..< sectionBooksCount {
-                var shelfModel = ShelfModel(
-                    bookCoverSource: sectionBooks[j].bookCoverSource,
-                    bookId: sectionBooks[j].bookId,
-                    bookTitle: sectionBooks[j].bookTitle,
-                    bookProgress: sectionBooks[j].bookProgress,
-                    bookStatus: sectionBooks[j].bookStatus,
-                    sectionId: sectionId,
-                    show: true,
-                    type: ""
-                )
-                
-                if j == 0 {
-                    shelfModel.type = SectionShelfCompositionalView.START
-                } else if j == sectionBooksCount - 1 {
-                    shelfModel.type = SectionShelfCompositionalView.END
-                } else {
-                    shelfModel.type = SectionShelfCompositionalView.CENTER
-                }
-                shelfModelArray.append(shelfModel)
-                
-//                if j == (sectionBooksCount - 1) {
-//                    var numberOfRows = sectionBooksCount / numberOfTilesPerRow
-//                    let remainderTiles = sectionBooksCount % numberOfTilesPerRow
-//
-//                    if remainderTiles > 0 {
-//                        numberOfRows = numberOfRows + 1
-//                        let fillUp = numberOfTilesPerRow - remainderTiles
-//                        for i in 0 ..< fillUp {
-//                            var shelfModel = ShelfModel()
-//                            if i == (fillUp - 1) {
-//                                shelfModel.type = SectionShelfCompositionalView.END
-//                            } else {
-//                                shelfModel.type = SectionShelfCompositionalView.CENTER
-//                            }
-//                            shelfModelArray.append(shelfModel)
-//                        }
-//                    }
-//                    cummulativeShelfHeight += (numberOfRows * gridItemHeight) + Int(headerReferenceSizeHeight)
-//                }
+    public func reloadBooks(bookModelSection: [ShelfModelSection]) {
+        if shelfSectionItemWidth.count < bookModelSection.count {
+            shelfSectionItemWidth.append(contentsOf: Array<Double>(repeating: 0.0, count: bookModelSection.count - shelfSectionItemWidth.count))
+        }
+        shelfModelSection = bookModelSection
+        for i in 0..<shelfModelSection.count {
+            shelfModelSection[i].sectionShelf[0].type = SectionShelfCompositionalView.START
+            if shelfModelSection[i].sectionShelf.count > 0 {
+                shelfModelSection[i].sectionShelf[shelfModelSection[i].sectionShelf.count - 1].type = SectionShelfCompositionalView.END
             }
-            
-            let cummulativeShelfHeight = (bookModelSection.count * gridItemHeight) + Int(headerReferenceSizeHeight)
-
-            if i == (bookModelSection.count - 1) {
-                if cummulativeShelfHeight < shelfHeight {
-                    let remainderRowHeight = (shelfHeight - cummulativeShelfHeight) / gridItemHeight
-                    
-                    if remainderRowHeight == 0 {
-                        for i in 0 ..< numberOfTilesPerRow {
-                            var shelfModel = ShelfModel()
-                            if i == 0 {
-                                shelfModel.type = SectionShelfCompositionalView.START
-                            } else if i == (numberOfTilesPerRow - 1) {
-                                shelfModel.type = SectionShelfCompositionalView.END
-                            } else {
-                                shelfModel.type = SectionShelfCompositionalView.CENTER
-                            }
-                            shelfModel.sectionId = sectionId
-                            shelfModel.bookId = "remainder-\(i)"
-                            shelfModelArray.append(shelfModel)
-                        }
-                    } else if remainderRowHeight > 0 {
-                        let fillUp = numberOfTilesPerRow * (remainderRowHeight + 1)
-                        for i in 0 ..< fillUp {
-                            var shelfModel = ShelfModel()
-                            if (i % numberOfTilesPerRow) == 0 {
-                                shelfModel.type = SectionShelfCompositionalView.START
-                            } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                                shelfModel.type = SectionShelfCompositionalView.END
-                            } else {
-                                shelfModel.type = SectionShelfCompositionalView.CENTER
-                            }
-                            shelfModel.sectionId = sectionId
-                            shelfModel.bookId = "remainder-\(i)"
-                            shelfModelArray.append(shelfModel)
-                        }
-                    }
-                }
-            }
-            
-            shelfModelSection.append(ShelfModelSection(sectionName: sectionName, sectionId: sectionId, sectionShelf: shelfModelArray))
         }
         
+        optionsButtonTagMap.removeAll(keepingCapacity: true)
+        
         var snapshot = NSDiffableDataSourceSnapshot<ShelfModelSection, ShelfModel>()
+
         shelfModelSection.forEach { section in
-            snapshot.appendSections([section])
-            print("snapshot.appendItems(section.sectionShelf) \(section.sectionShelf)")
+            snapshot.appendSections([ShelfModelSection(sectionName: section.sectionName, sectionId: section.sectionId, sectionShelf: [])])
             snapshot.appendItems(section.sectionShelf)
         }
         shelfViewDataSource.apply(snapshot, animatingDifferences: true)
     }
     
     private func buildSingleSectionShelf(sizeOfModel: Int) {
-        for row in 0..<(numberOfRowsPerScreen ?? 9) {
+        let rows = numberOfRowsPerScreen ?? 9
+        for row in 0..<(rows) {
             var shelfModelArray = [ShelfModel]()
 
-            let fillUp = numberOfTilesPerRow ?? 9
+            let fillUp = rows
             for i in 0 ..< fillUp {
                 var shelfModel = ShelfModel()
                 if i == 0 {
@@ -434,7 +348,7 @@ public class SectionShelfCompositionalView: UIView {
             }
             shelfModelSection.append(ShelfModelSection(sectionName: "", sectionId: "section-\(row)", sectionShelf: shelfModelArray))
         }
-        
+        shelfSectionItemWidth.append(contentsOf: Array<Double>(repeating: 0.0, count: rows))
 //        shelfView.reloadData()
         var snapshot = NSDiffableDataSourceSnapshot<ShelfModelSection, ShelfModel>()
         shelfModelSection.forEach { section in
@@ -458,6 +372,7 @@ public class SectionShelfCompositionalView: UIView {
             }
         }
     }
+
 }
 
 extension SectionShelfCompositionalView: UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {

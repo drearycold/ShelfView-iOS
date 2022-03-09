@@ -11,6 +11,7 @@ import UIKit
 class ShelfCellView: UICollectionViewCell {
     let shelfBackground = UIImageView()
     let bookBackground = UIView()
+    
     var bookCover = UIImageView()
     let indicator = UIActivityIndicatorView()
     let spine = UIImageView()
@@ -61,10 +62,72 @@ class ShelfCellView: UICollectionViewCell {
         progress.layer.cornerRadius = 8
         progress.layer.masksToBounds = true
         
-        shelfBackground.isUserInteractionEnabled = true
+        shelfBackground.isUserInteractionEnabled = false
         bookCover.isUserInteractionEnabled = true
         
+        shelfBackground.translatesAutoresizingMaskIntoConstraints = false
+        shelfBackground.contentMode = .scaleToFill
+        bookBackground.translatesAutoresizingMaskIntoConstraints = false
         
+        bookCover.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate(
+            [
+                shelfBackground.leadingAnchor.constraint(equalTo: leadingAnchor),
+                shelfBackground.trailingAnchor.constraint(equalTo: trailingAnchor),
+                shelfBackground.topAnchor.constraint(equalTo: topAnchor),
+                shelfBackground.bottomAnchor.constraint(equalTo: bottomAnchor)
+            ] + [
+                bookBackground.heightAnchor.constraint(equalTo: heightAnchor, constant: -Dimens.bookBackgroundMargin),
+                bookBackground.centerXAnchor.constraint(equalTo: shelfBackground.centerXAnchor),
+                bookBackground.centerYAnchor.constraint(equalTo: shelfBackground.centerYAnchor)
+            ] + [
+                bookCover.heightAnchor.constraint(equalTo: bookBackground.heightAnchor, constant: -Dimens.bookCoverMargin),
+                bookCover.widthAnchor.constraint(equalTo: bookCover.heightAnchor, multiplier: Dimens.bookCoverAspect),
+                bookCover.centerXAnchor.constraint(equalTo: shelfBackground.centerXAnchor),
+                bookCover.centerYAnchor.constraint(equalTo: shelfBackground.centerYAnchor)
+            ]
+        )
+        
+        spine.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            spine.topAnchor.constraint(equalTo: bookCover.topAnchor),
+            spine.heightAnchor.constraint(equalTo: bookCover.heightAnchor),
+            spine.leadingAnchor.constraint(equalTo: bookCover.leadingAnchor),
+            spine.widthAnchor.constraint(equalToConstant: 8)
+        ])
+        
+        progress.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+                progress.trailingAnchor.constraint(equalTo: bookCover.trailingAnchor, constant: -4),
+                progress.topAnchor.constraint(equalTo: bookCover.topAnchor, constant: 4),
+                progress.widthAnchor.constraint(equalToConstant: 36),
+                progress.heightAnchor.constraint(equalToConstant: 24)
+        ])
+        
+        refresh.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            refresh.leadingAnchor.constraint(equalTo: bookCover.leadingAnchor, constant: 12),
+            refresh.bottomAnchor.constraint(equalTo: bookCover.bottomAnchor, constant: -4),
+            refresh.widthAnchor.constraint(equalToConstant: 20),
+            refresh.heightAnchor.constraint(equalToConstant: 24)
+        ])
+        
+        options.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            options.trailingAnchor.constraint(equalTo: bookCover.trailingAnchor, constant: 16),
+            options.bottomAnchor.constraint(equalTo: bookCover.bottomAnchor, constant: -4),
+            options.widthAnchor.constraint(equalToConstant: 64),
+            options.heightAnchor.constraint(equalToConstant: 32)
+        ])
+        
+        indicator.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            indicator.centerXAnchor.constraint(equalTo: bookCover.centerXAnchor),
+            indicator.centerYAnchor.constraint(equalTo: bookCover.centerYAnchor),
+            indicator.widthAnchor.constraint(equalToConstant: 50),
+            indicator.heightAnchor.constraint(equalToConstant: 50)
+        ])
     }
     
     required init?(coder aDecoder: NSCoder) {
