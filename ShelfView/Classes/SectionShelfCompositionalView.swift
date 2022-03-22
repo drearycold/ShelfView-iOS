@@ -221,7 +221,10 @@ public class SectionShelfCompositionalView: UIView {
             } else {
                 cell.progress.text = "\(shelfItem.bookProgress)%"
             }
-
+            
+            cell.refresh.isHidden = true
+            cell.progress.isHidden = shelfItem.bookProgress == 0
+            cell.options.isHidden = true
         }
         let headerRegistration = UICollectionView.SupplementaryRegistration
         <ShelfHeaderCellView>(elementKind: SectionShelfCompositionalView.sectionHeaderElementKind) {
@@ -312,9 +315,7 @@ public class SectionShelfCompositionalView: UIView {
         shelfModelSection = bookModelSection
         for i in 0..<shelfModelSection.count {
             shelfModelSection[i].sectionShelf[0].type = SectionShelfCompositionalView.START
-            if shelfModelSection[i].sectionShelf.count > 0 {
-                shelfModelSection[i].sectionShelf[shelfModelSection[i].sectionShelf.count - 1].type = SectionShelfCompositionalView.END
-            }
+            shelfModelSection[i].sectionShelf[shelfModelSection[i].sectionShelf.count - 1].type = SectionShelfCompositionalView.END
         }
         
         optionsButtonTagMap.removeAll(keepingCapacity: true)

@@ -95,6 +95,11 @@ public class PlainShelfView: UIView {
         longPressGestureRecognizer.delaysTouchesBegan = true
         shelfView.addGestureRecognizer(longPressGestureRecognizer)
         
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTap(gesture:)))
+        tapGestureRecognizer.delegate = self
+        tapGestureRecognizer.delaysTouchesEnded = true
+        shelfView.addGestureRecognizer(tapGestureRecognizer)
+        
         addSubview(shelfView)
         
         layout.minimumLineSpacing = 0
@@ -207,6 +212,38 @@ public class PlainShelfView: UIView {
         shelfView.reloadData()
     }
     
+    @objc func handleTap(gesture: UITapGestureRecognizer?) {
+        guard let gesture = gesture, gesture.state == .ended else { return }
+        print("Tap")
+        
+        let location = gesture.location(in: shelfView)
+        
+        guard let indexPath = shelfView.indexPathForItem(at: location),
+              let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView
+        else { return }
+        
+        let shelfItem = shelfModel[indexPath.row]
+        guard shelfItem.show else { return }
+        
+        let frameInShelfView = cell.options.convert(cell.options.frame, to: shelfView)
+        let locationinOption = gesture.location(in: cell.options)
+        let locationinRefresh = gesture.location(in: cell.refresh)
+        
+        if locationinOption.x > cell.options.frame.width / 4,
+           locationinOption.x < cell.options.frame.width / 4 * 3,
+           locationinOption.y > 0,
+           locationinOption.y < cell.options.frame.height {
+            delegate.onBookLongClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInShelfView)
+        } else if locationinRefresh.x > 0,
+                  locationinRefresh.x < cell.refresh.frame.width,
+                  locationinRefresh.y > 0,
+                  locationinRefresh.y < cell.refresh.frame.height {
+            delegate.onBookRefreshClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInShelfView)
+        } else {
+            delegate.onBookClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle)
+        }
+    }
+    
     @objc func handleLongPress(gesture: UILongPressGestureRecognizer?) {
         guard let gesture = gesture, gesture.state == .began else { return }
         print("Long Pressed")
@@ -229,7 +266,6 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         let bookCover = shelfItem.bookCoverSource.trim()
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ShelfCellView.identifier, for: indexPath) as! ShelfCellView
-        cell.shelfBackground.frame = CGRect(x: 0, y: 0, width: trueGridItemWidth, height: Double(gridItemHeight))
         cell.shelfBackground.contentMode = .scaleToFill
         
         switch shelfItem.type {
@@ -245,9 +281,6 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         }
         
         cell.bookCover.kf.indicatorType = .none
-        cell.bookBackground.frame = CGRect(x: (trueGridItemWidth - Dimens.bookWidth) / 2, y: bookBackgroundMarignTop, width: Dimens.bookWidth, height: Dimens.bookHeight)
-        cell.bookCover.frame = CGRect(x: bookCoverMargin / 2, y: bookCoverMargin, width: Dimens.bookWidth - bookCoverMargin, height: Dimens.bookHeight - bookCoverMargin)
-        cell.indicator.frame = CGRect(x: (Dimens.bookWidth - indicatorWidth) / 2, y: (Dimens.bookHeight - indicatorWidth) / 2, width: indicatorWidth, height: indicatorWidth)
         cell.indicator.startAnimating()
         
         switch bookSource {
@@ -325,22 +358,6 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         }
         
         cell.bookBackground.isHidden = !shelfItem.show
-        cell.spine.frame = CGRect(x: CGFloat(bookCoverMargin) / 2, y: CGFloat(bookCoverMargin), width: spineWidth, height: cell.bookCover.frame.height)
-        
-        cell.options.frame = CGRect(x: cell.bookCover.frame.maxX - 48, y: cell.bookCover.frame.maxY - 36, width: 64, height: 32)
-        cell.options.removeTarget(nil, action: nil, for: .touchUpInside)
-        cell.options.addTarget(self, action: #selector(optionsActionPlain(sender:)), for: .touchUpInside)
-        cell.options.tag = position
-        
-//        cell.options.addAction(UIAction(title: "OPTIONS", image: nil, identifier: UIAction.Identifier("TAP"), discoverabilityTitle: nil, attributes: [], state: .on, handler: { action in
-//            let frameInSuperView = self.shelfView.convert(cell.frame, to: self)
-//            delegate.onBookLongClicked(self, index: position, bookId: shelfModel[position].bookId, bookTitle: shelfModel[position].bookTitle, frame: frameInSuperView)
-//        }), for: .touchUpInside)
-        
-        cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX + 12, y: cell.bookCover.frame.maxY - 28, width: 20, height: 24)
-        cell.refresh.removeTarget(nil, action: nil, for: .touchUpInside)
-        cell.refresh.addTarget(self, action: #selector(refreshActionSection(sender:)), for: .touchUpInside)
-        cell.refresh.tag = position
 
         cell.refresh.setImage(
             Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())")?
@@ -353,7 +370,6 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         } else {
             cell.progress.text = "\(shelfItem.bookProgress)%"
         }
-        cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)
         
         return cell
     }
@@ -361,14 +377,6 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return shelfModel.count
     }
-    
-    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let position = indexPath.row
-        if shelfModel[position].show {
-            delegate.onBookClicked(self, index: position, bookId: shelfModel[position].bookId, bookTitle: shelfModel[position].bookTitle)
-        }
-    }
-    
     
     @objc func optionsActionPlain(sender: UIButton) {
         print("optionsActionPlain \(sender.tag)")

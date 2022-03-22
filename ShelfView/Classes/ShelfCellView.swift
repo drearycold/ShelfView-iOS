@@ -19,6 +19,10 @@ class ShelfCellView: UICollectionViewCell {
     let progress = UILabel()
     let refresh = UIButton()
     
+    override var canBecomeFirstResponder: Bool {
+        true
+    }
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -61,9 +65,6 @@ class ShelfCellView: UICollectionViewCell {
         progress.layer.backgroundColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 0.4).cgColor
         progress.layer.cornerRadius = 8
         progress.layer.masksToBounds = true
-        
-        shelfBackground.isUserInteractionEnabled = false
-        bookCover.isUserInteractionEnabled = true
         
         shelfBackground.translatesAutoresizingMaskIntoConstraints = false
         shelfBackground.contentMode = .scaleToFill
