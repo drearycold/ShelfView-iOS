@@ -27,8 +27,6 @@ public class SectionShelfCompositionalView: UIView {
     private static let CENTER = "center"
     
     private var shelfModelSection = [ShelfModelSection]()
-    private var shelfSectionItemWidth = [Double]()
-    private var optionsButtonTagMap = [Int:IndexPath]()
     
     private var bookSource = BOOK_SOURCE_URL
     
@@ -69,10 +67,6 @@ public class SectionShelfCompositionalView: UIView {
         numberOfTilesPerRow = shelfWidth / gridItemWidth
         trueGridItemWidth = Double(gridItemWidth + Dimens.gridSpacing)
 
-        if shelfWidth % gridItemWidth > 0 {
-            numberOfTilesPerRow += 1
-        }
-
         numberOfRowsPerScreen = shelfHeight / gridItemHeight
         if shelfHeight % gridItemHeight > 0 {
             numberOfRowsPerScreen += 1
@@ -90,12 +84,6 @@ public class SectionShelfCompositionalView: UIView {
     public func resize(to size: CGSize) {
         if viewHasBeenInitialized {
             updateGeo()
-            
-            for sectionIndex in 0..<min(shelfSectionItemWidth.count, shelfModelSection.count) {
-                if self.shelfModelSection[sectionIndex].sectionShelf.count * Int(self.trueGridItemWidth ?? 0) < self.shelfWidth {
-                    self.shelfSectionItemWidth[sectionIndex] = Double(self.shelfWidth) / Double(self.shelfModelSection[sectionIndex].sectionShelf.count)
-                }
-            }
             
             shelfView.collectionViewLayout.invalidateLayout()
         }
@@ -200,17 +188,6 @@ public class SectionShelfCompositionalView: UIView {
             
             cell.bookBackground.isHidden = !shelfItem.show
             
-            let bookIdHash = shelfItem.bookId.hashValue
-            optionsButtonTagMap[bookIdHash] = indexPath
-
-            cell.options.removeTarget(nil, action: nil, for: .touchUpInside)
-            cell.options.addTarget(self, action: #selector(optionsActionSection(sender:)), for: .touchUpInside)
-            cell.options.tag = bookIdHash
-            
-            cell.refresh.removeTarget(nil, action: nil, for: .touchUpInside)
-            cell.refresh.addTarget(self, action: #selector(refreshActionSection(sender:)), for: .touchUpInside)
-            cell.refresh.tag = bookIdHash
-
             cell.refresh.setImage(
                 Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())")?
                     .resizableImage(withCapInsets: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2), resizingMode: .stretch),
@@ -226,6 +203,7 @@ public class SectionShelfCompositionalView: UIView {
             cell.progress.isHidden = shelfItem.bookProgress == 0
             cell.options.isHidden = true
         }
+        
         let headerRegistration = UICollectionView.SupplementaryRegistration
         <ShelfHeaderCellView>(elementKind: SectionShelfCompositionalView.sectionHeaderElementKind) {
             header, elementKind, indexPath in
@@ -255,17 +233,13 @@ public class SectionShelfCompositionalView: UIView {
         
         addSubview(shelfView)
         
-        shelfWidth = Int(shelfView.frame.width)
-        shelfHeight = Int(shelfView.frame.height)
-        numberOfTilesPerRow = shelfWidth / gridItemWidth
-        trueGridItemWidth = Double(gridItemWidth + Dimens.gridSpacing)
+        updateGeo()
         
         shelfView.collectionViewLayout.invalidateLayout()
         
-        buildSingleSectionShelf(sizeOfModel: 0)
-        
         viewHasBeenInitialized = true
     }
+    
     private func createLayout() -> UICollectionViewLayout {
         let layout = UICollectionViewCompositionalLayout {
             (sectionIndex: Int, layoutEnvironment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection? in
@@ -282,7 +256,7 @@ public class SectionShelfCompositionalView: UIView {
                self.shelfModelSection[sectionIndex].sectionShelf.count * Int(itemWidth) < self.shelfWidth {
                 itemWidth = Double(self.shelfWidth) / Double(self.shelfModelSection[sectionIndex].sectionShelf.count)
             }
-            self.shelfSectionItemWidth[sectionIndex] = itemWidth
+//            self.shelfSectionItemWidth[sectionIndex] = itemWidth
             
             let group = NSCollectionLayoutGroup.horizontal(
                 layoutSize: NSCollectionLayoutSize(
@@ -308,17 +282,16 @@ public class SectionShelfCompositionalView: UIView {
         
         return layout
     }
+    
     public func reloadBooks(bookModelSection: [ShelfModelSection]) {
-        if shelfSectionItemWidth.count < bookModelSection.count {
-            shelfSectionItemWidth.append(contentsOf: Array<Double>(repeating: 0.0, count: bookModelSection.count - shelfSectionItemWidth.count))
-        }
         shelfModelSection = bookModelSection
+
+        buildShelf()
+
         for i in 0..<shelfModelSection.count {
             shelfModelSection[i].sectionShelf[0].type = SectionShelfCompositionalView.START
             shelfModelSection[i].sectionShelf[shelfModelSection[i].sectionShelf.count - 1].type = SectionShelfCompositionalView.END
         }
-        
-        optionsButtonTagMap.removeAll(keepingCapacity: true)
         
         var snapshot = NSDiffableDataSourceSnapshot<ShelfModelSection, ShelfModel>()
 
@@ -326,37 +299,27 @@ public class SectionShelfCompositionalView: UIView {
             snapshot.appendSections([ShelfModelSection(sectionName: section.sectionName, sectionId: section.sectionId, sectionShelf: [])])
             snapshot.appendItems(section.sectionShelf)
         }
+        
         shelfViewDataSource.apply(snapshot, animatingDifferences: true)
     }
     
-    private func buildSingleSectionShelf(sizeOfModel: Int) {
-        let rows = numberOfRowsPerScreen ?? 9
-        for row in 0..<(rows) {
-            var shelfModelArray = [ShelfModel]()
-
-            let fillUp = rows
-            for i in 0 ..< fillUp {
-                var shelfModel = ShelfModel()
-                if i == 0 {
-                    shelfModel.type = SectionShelfCompositionalView.START
-                } else if i == (fillUp - 1) {
-                    shelfModel.type = SectionShelfCompositionalView.END
-                } else {
-                    shelfModel.type = SectionShelfCompositionalView.CENTER
-                }
-                shelfModel.bookId = "row-\(row)-\(i)"
-                shelfModelArray.append(shelfModel)
-            }
-            shelfModelSection.append(ShelfModelSection(sectionName: "", sectionId: "section-\(row)", sectionShelf: shelfModelArray))
+    private func buildShelf() {
+        guard shelfModelSection.count < numberOfRowsPerScreen ?? 9 else { return }
+        
+        (shelfModelSection.count..<(numberOfRowsPerScreen ?? 9)).forEach { row in
+            shelfModelSection.append(
+                ShelfModelSection(
+                    sectionName: "",
+                    sectionId: "section-\(row)",
+                    sectionShelf: (0 ..< (numberOfTilesPerRow ?? 9)).map {
+                        var shelfModel = ShelfModel()
+                        shelfModel.type = SectionShelfCompositionalView.CENTER
+                        shelfModel.bookId = "row-\(row)-\($0)"
+                        return shelfModel
+                    }
+                )
+            )
         }
-        shelfSectionItemWidth.append(contentsOf: Array<Double>(repeating: 0.0, count: rows))
-//        shelfView.reloadData()
-        var snapshot = NSDiffableDataSourceSnapshot<ShelfModelSection, ShelfModel>()
-        shelfModelSection.forEach { section in
-            snapshot.appendSections([section])
-            snapshot.appendItems(section.sectionShelf)
-        }
-        shelfViewDataSource.apply(snapshot, animatingDifferences: true)
     }
     
     @objc func handleLongPress(gesture: UILongPressGestureRecognizer?) {
@@ -394,34 +357,7 @@ extension SectionShelfCompositionalView: UICollectionViewDelegate, UICollectionV
             delegate.onBookClicked(self, section: section, index: position, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle)
         }
     }
-    
-    @objc func optionsActionSection(sender: UIButton) {
-        guard let indexPath = optionsButtonTagMap[sender.tag] else { return }
-        print("optionsActionSection \(indexPath)")
-        if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
-            let sectionItem = shelfModelSection[indexPath.section]
-            let shelfItem = sectionItem.sectionShelf[indexPath.item]
-            if shelfItem.show {
-                let frameInSuperView = cell.convert(cell.options.frame, to: self)
-                
-                delegate.onBookLongClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
-                
-            }
-        }
-    }
-    
-    @objc func refreshActionSection(sender: UIButton) {
-        guard let indexPath = optionsButtonTagMap[sender.tag] else { return }
-        print("refreshActionSection \(indexPath)")
-        if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
-            let sectionItem = shelfModelSection[indexPath.section]
-            let shelfItem = sectionItem.sectionShelf[indexPath.item]
-            if shelfItem.show {
-                let frameInSuperView = cell.convert(cell.options.frame, to: self)
-                delegate.onBookRefreshClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
-            }
-        }
-    }
+
 }
 extension SectionShelfCompositionalView: UIGestureRecognizerDelegate {
 }

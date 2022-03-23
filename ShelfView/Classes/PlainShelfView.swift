@@ -253,7 +253,6 @@ public class PlainShelfView: UIView {
             if shelfItem.show {
                 let frameInSuperView = shelfView.convert(cell.frame, to: self)
                 delegate.onBookLongClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
-                
             }
         }
     }
