@@ -22,8 +22,8 @@ extension UIColor {
             cString = String(cString.suffix(from: cString.index(cString.startIndex, offsetBy: 1)))
         }
 
-        var rgbValue: UInt32 = 0
-        Scanner(string: cString).scanHexInt32(&rgbValue)
+        var rgbValue: UInt64 = 0
+        Scanner(string: cString).scanHexInt64(&rgbValue)
 
         let components = (
             R: CGFloat((rgbValue & 0xFF0000) >> 16) / 255,
