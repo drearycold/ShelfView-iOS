@@ -9,14 +9,33 @@
 import Foundation
 
 public struct BookModel {
+    public enum BookStatus: String {
+        case READY
+        case NOCONNECT
+        case HASUPDATE
+        case UPDATING
+        case DOWNLOADING
+        case LOCAL
+    }
+    
     var bookCoverSource: String
     var bookId: String
     var bookTitle: String
+    var bookProgress: Int
+    var bookStatus: BookStatus
 
-    public init(bookCoverSource: String, bookId: String, bookTitle: String) {
+    public init(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, bookStatus: BookStatus) {
         self.bookCoverSource = bookCoverSource
         self.bookId = bookId
         self.bookTitle = bookTitle
+        self.bookProgress = bookProgress
+        self.bookStatus = bookStatus
+        if self.bookProgress < 0 {
+            self.bookProgress = 0
+        }
+        if self.bookProgress > 100 {
+            self.bookProgress = 100
+        }
         if bookCoverSource.isEmpty {
             fatalError("bookCoverSource must not be empty")
         }
@@ -41,27 +60,70 @@ public struct BookModelSection {
     }
 }
 
-struct ShelfModel {
+public struct ShelfModel: Hashable {
     var bookCoverSource: String
     var bookId: String
     var bookTitle: String
+    var bookProgress: Int
+    var bookStatus: BookModel.BookStatus
+    var sectionId: String
+    
     var show: Bool
     var type: String
 
-    public init(bookCoverSource: String, bookId: String, bookTitle: String, show: Bool, type: String) {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(bookId)
+        hasher.combine(sectionId)
+    }
+    
+    public static func == (lhs: ShelfModel, rhs: ShelfModel) -> Bool {
+        lhs.bookId == rhs.bookId && lhs.sectionId == rhs.sectionId
+    }
+    
+    public init() {
+        bookCoverSource = ""
+        bookId = ""
+        bookTitle = ""
+        bookProgress = 0
+        bookStatus = .READY
+        sectionId = ""
+
+        show = false
+        type = ""
+    }
+    
+    public init(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, bookStatus: BookModel.BookStatus, sectionId: String, show: Bool, type: String) {
         self.bookCoverSource = bookCoverSource
         self.bookId = bookId
         self.bookTitle = bookTitle
+        self.bookProgress = bookProgress
+        self.bookStatus = bookStatus
+        self.sectionId = sectionId
+        if self.bookProgress < 0 {
+            self.bookProgress = 0
+        }
+        if self.bookProgress > 100 {
+            self.bookProgress = 100
+        }
+        
         self.show = show
         self.type = type
     }
 }
 
-struct ShelfModelSection {
+public struct ShelfModelSection: Hashable {
     var sectionName: String
     var sectionId: String
     var sectionShelf: [ShelfModel]
 
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(sectionId)
+    }
+    
+    public static func == (lhs: ShelfModelSection, rhs: ShelfModelSection) -> Bool {
+        lhs.sectionId == rhs.sectionId
+    }
+    
     public init(sectionName: String, sectionId: String, sectionShelf: [ShelfModel]) {
         self.sectionName = sectionName
         self.sectionId = sectionId

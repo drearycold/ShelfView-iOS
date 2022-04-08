@@ -33,7 +33,7 @@
 		0796471E21D42BBF007BA70C /* SectionShelfController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionShelfController.swift; sourceTree = "<group>"; };
 		07B70C121F76D613005B60F1 /* ShelfView.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ShelfView.framework; path = "../../../Library/Developer/Xcode/DerivedData/ShelfView-gntmofsaocpphqbzmctlugbygrql/Build/Products/Debug-iphonesimulator/ShelfView/ShelfView.framework"; sourceTree = "<group>"; };
 		0A9765D306CCF9D17F0910D6 /* Pods_ShelfView_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ShelfView_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		0AF892A3F21A78EC3FF3348F /* ShelfView.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = ShelfView.podspec; path = ../ShelfView.podspec; sourceTree = "<group>"; };
+		0AF892A3F21A78EC3FF3348F /* ShelfView.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = ShelfView.podspec; path = ../ShelfView.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		1F8551EAF5915EA209231457 /* Pods_ShelfView_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ShelfView_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1FB356FC702C44EE95B955EB /* Pods-ShelfView_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShelfView_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-ShelfView_Example/Pods-ShelfView_Example.release.xcconfig"; sourceTree = "<group>"; };
 		379FA4752B5FA86899D82853 /* Pods-ShelfView_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShelfView_Tests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-ShelfView_Tests/Pods-ShelfView_Tests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -219,12 +219,12 @@
 				TargetAttributes = {
 					607FACCF1AFB9204008FA782 = {
 						CreatedOnToolsVersion = 6.3.1;
-						DevelopmentTeam = MDCJGSLNV9;
+						DevelopmentTeam = L8WKJ3U7UT;
 						LastSwiftMigration = 0820;
 					};
 					607FACE41AFB9204008FA782 = {
 						CreatedOnToolsVersion = 6.3.1;
-						DevelopmentTeam = MDCJGSLNV9;
+						DevelopmentTeam = L8WKJ3U7UT;
 						LastSwiftMigration = 0820;
 						TestTargetID = 607FACCF1AFB9204008FA782;
 					};
@@ -235,6 +235,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -294,7 +295,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-ShelfView_Example/Pods-ShelfView_Example-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-ShelfView_Example/Pods-ShelfView_Example-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/Kingfisher/Kingfisher.framework",
 				"${BUILT_PRODUCTS_DIR}/ShelfView/ShelfView.framework",
 			);
@@ -305,7 +306,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-ShelfView_Example/Pods-ShelfView_Example-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ShelfView_Example/Pods-ShelfView_Example-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		DC68CFF1C61B92A183797797 /* [CP] Check Pods Manifest.lock */ = {
@@ -469,12 +470,12 @@
 			baseConfigurationReference = 9779085D8D49DB700C8D91F0 /* Pods-ShelfView_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = MDCJGSLNV9;
+				DEVELOPMENT_TEAM = L8WKJ3U7UT;
 				INFOPLIST_FILE = ShelfView/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MODULE_NAME = ExampleApp;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tdscientist.ShelfView;
+				PRODUCT_BUNDLE_IDENTIFIER = com.roswen9.ShelfView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -486,12 +487,12 @@
 			baseConfigurationReference = 1FB356FC702C44EE95B955EB /* Pods-ShelfView_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = MDCJGSLNV9;
+				DEVELOPMENT_TEAM = L8WKJ3U7UT;
 				INFOPLIST_FILE = ShelfView/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MODULE_NAME = ExampleApp;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tdscientist.ShelfView;
+				PRODUCT_BUNDLE_IDENTIFIER = com.roswen9.ShelfView;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -502,7 +503,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 379FA4752B5FA86899D82853 /* Pods-ShelfView_Tests.debug.xcconfig */;
 			buildSettings = {
-				DEVELOPMENT_TEAM = MDCJGSLNV9;
+				DEVELOPMENT_TEAM = L8WKJ3U7UT;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
@@ -515,7 +516,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -523,7 +524,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 4A7F199FDC8369BDC49D3673 /* Pods-ShelfView_Tests.release.xcconfig */;
 			buildSettings = {
-				DEVELOPMENT_TEAM = MDCJGSLNV9;
+				DEVELOPMENT_TEAM = L8WKJ3U7UT;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
@@ -532,7 +533,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};

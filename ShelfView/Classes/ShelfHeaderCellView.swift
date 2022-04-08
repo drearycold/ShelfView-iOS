@@ -18,8 +18,24 @@ class ShelfHeaderCellView: UICollectionReusableView {
         headerLabel.textAlignment = .center
         headerLabel.shadowColor = .brown
         headerLabel.shadowOffset = CGSize(width: 0.0, height: 1.0)
+        
         addSubview(header)
         addSubview(headerLabel)
+        
+        header.translatesAutoresizingMaskIntoConstraints = false
+        headerLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerLabel.adjustsFontForContentSizeCategory = true
+        
+        NSLayoutConstraint.activate([
+            header.leadingAnchor.constraint(equalTo: leadingAnchor),
+            header.trailingAnchor.constraint(equalTo: trailingAnchor),
+            header.topAnchor.constraint(equalTo: topAnchor),
+            header.bottomAnchor.constraint(equalTo: bottomAnchor),
+            headerLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+            headerLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            headerLabel.topAnchor.constraint(equalTo: topAnchor, constant: 4),
+            headerLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4)
+        ])
     }
     
     required init?(coder aDecoder: NSCoder) {

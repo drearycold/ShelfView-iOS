@@ -27,6 +27,7 @@ public class SectionShelfView: UIView {
     
     private var bookModelSection = [BookModelSection]()
     private var shelfModelSection = [ShelfModelSection]()
+    private var optionsButtonTagMap = [Int:IndexPath]()
     
     private var bookSource = BOOK_SOURCE_URL
     
@@ -91,6 +92,12 @@ public class SectionShelfView: UIView {
         shelfView.showsVerticalScrollIndicator = false
         shelfView.showsHorizontalScrollIndicator = false
         shelfView.backgroundColor = UIColor("#C49E7A")
+        
+        let longPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(gesture:)))
+        longPressGestureRecognizer.delegate = self
+        longPressGestureRecognizer.delaysTouchesBegan = true
+        shelfView.addGestureRecognizer(longPressGestureRecognizer)
+        
         addSubview(shelfView)
         
         layout.minimumLineSpacing = 0
@@ -122,6 +129,7 @@ public class SectionShelfView: UIView {
     
     private func processData() {
         shelfModelSection.removeAll()
+        optionsButtonTagMap.removeAll(keepingCapacity: true)
         var cummulativeShelfHeight = 0
         
         for i in 0 ..< bookModelSection.count {
@@ -133,17 +141,25 @@ public class SectionShelfView: UIView {
             var shelfModelArray = [ShelfModel]()
             
             for j in 0 ..< sectionBooksCount {
-                let bookCoverSource = sectionBooks[j].bookCoverSource
-                let bookId = sectionBooks[j].bookId
-                let bookTitle = sectionBooks[j].bookTitle
+                var shelfModel = ShelfModel(
+                    bookCoverSource: sectionBooks[j].bookCoverSource,
+                    bookId: sectionBooks[j].bookId,
+                    bookTitle: sectionBooks[j].bookTitle,
+                    bookProgress: sectionBooks[j].bookProgress,
+                    bookStatus: sectionBooks[j].bookStatus,
+                    sectionId: sectionId,
+                    show: true,
+                    type: ""
+                )
                 
                 if (j % numberOfTilesPerRow) == 0 {
-                    shelfModelArray.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, show: true, type: SectionShelfView.START))
+                    shelfModel.type = SectionShelfView.START
                 } else if (j % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                    shelfModelArray.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, show: true, type: SectionShelfView.END))
+                    shelfModel.type = SectionShelfView.END
                 } else {
-                    shelfModelArray.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, show: true, type: SectionShelfView.CENTER))
+                    shelfModel.type = SectionShelfView.CENTER
                 }
+                shelfModelArray.append(shelfModel)
                 
                 if j == (sectionBooksCount - 1) {
                     var numberOfRows = sectionBooksCount / numberOfTilesPerRow
@@ -153,11 +169,13 @@ public class SectionShelfView: UIView {
                         numberOfRows = numberOfRows + 1
                         let fillUp = numberOfTilesPerRow - remainderTiles
                         for i in 0 ..< fillUp {
+                            var shelfModel = ShelfModel()
                             if i == (fillUp - 1) {
-                                shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.END))
+                                shelfModel.type = SectionShelfView.END
                             } else {
-                                shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.CENTER))
+                                shelfModel.type = SectionShelfView.CENTER
                             }
+                            shelfModelArray.append(shelfModel)
                         }
                     }
                     cummulativeShelfHeight += (numberOfRows * gridItemHeight) + Int(headerReferenceSizeHeight)
@@ -170,24 +188,28 @@ public class SectionShelfView: UIView {
                     
                     if remainderRowHeight == 0 {
                         for i in 0 ..< numberOfTilesPerRow {
+                            var shelfModel = ShelfModel()
                             if i == 0 {
-                                shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.START))
+                                shelfModel.type = SectionShelfView.START
                             } else if i == (numberOfTilesPerRow - 1) {
-                                shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.END))
+                                shelfModel.type = SectionShelfView.END
                             } else {
-                                shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.CENTER))
+                                shelfModel.type = SectionShelfView.CENTER
                             }
+                            shelfModelArray.append(shelfModel)
                         }
                     } else if remainderRowHeight > 0 {
                         let fillUp = numberOfTilesPerRow * (remainderRowHeight + 1)
                         for i in 0 ..< fillUp {
+                            var shelfModel = ShelfModel()
                             if (i % numberOfTilesPerRow) == 0 {
-                                shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.START))
+                                shelfModel.type = SectionShelfView.START
                             } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                                shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.END))
+                                shelfModel.type = SectionShelfView.END
                             } else {
-                                shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.CENTER))
+                                shelfModel.type = SectionShelfView.CENTER
                             }
+                            shelfModelArray.append(shelfModel)
                         }
                     }
                 }
@@ -208,11 +230,13 @@ public class SectionShelfView: UIView {
             numberOfRows = numberOfRows + 1
             let fillUp = numberOfTilesPerRow - remainderTiles
             for i in 0 ..< fillUp {
+                var shelfModel = ShelfModel()
                 if i == (fillUp - 1) {
-                    shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.END))
+                    shelfModel.type = SectionShelfView.END
                 } else {
-                    shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.CENTER))
+                    shelfModel.type = SectionShelfView.CENTER
                 }
+                shelfModelArray.append(shelfModel)
             }
         }
         
@@ -221,30 +245,49 @@ public class SectionShelfView: UIView {
             
             if remainderRowHeight == 0 {
                 for i in 0 ..< numberOfTilesPerRow {
+                    var shelfModel = ShelfModel()
                     if i == 0 {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.START))
+                        shelfModel.type = SectionShelfView.START
                     } else if i == (numberOfTilesPerRow - 1) {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.END))
+                        shelfModel.type = SectionShelfView.END
                     } else {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.CENTER))
+                        shelfModel.type = SectionShelfView.CENTER
                     }
+                    shelfModelArray.append(shelfModel)
                 }
             } else if remainderRowHeight > 0 {
                 let fillUp = numberOfTilesPerRow * (remainderRowHeight + 1)
                 for i in 0 ..< fillUp {
+                    var shelfModel = ShelfModel()
                     if (i % numberOfTilesPerRow) == 0 {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.START))
+                        shelfModel.type = SectionShelfView.START
                     } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.END))
+                        shelfModel.type = SectionShelfView.END
                     } else {
-                        shelfModelArray.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: SectionShelfView.CENTER))
+                        shelfModel.type = SectionShelfView.CENTER
                     }
+                    shelfModelArray.append(shelfModel)
                 }
             }
         }
         
         shelfModelSection.append(ShelfModelSection(sectionName: "", sectionId: "", sectionShelf: shelfModelArray))
         shelfView.reloadData()
+    }
+    
+    @objc func handleLongPress(gesture: UILongPressGestureRecognizer?) {
+        guard let gesture = gesture, gesture.state == .began else { return }
+        print("Long Pressed")
+        let location = gesture.location(in: shelfView)
+        if let indexPath = shelfView.indexPathForItem(at: location), let cell = shelfView.cellForItem(at: indexPath) {
+            let sectionItem = shelfModelSection[indexPath.section]
+            let shelfItem = sectionItem.sectionShelf[indexPath.item]
+            if shelfItem.show {
+                let frameInSuperView = shelfView.convert(cell.frame, to: self)
+                delegate.onBookLongClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
+                
+            }
+        }
     }
 }
 
@@ -317,7 +360,7 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
         case SectionShelfView.BOOK_SOURCE_URL:
             if shelfItem.show && bookCover != "" {
                 let url = URL(string: bookCover)!
-                cell.bookCover.kf.setImage(with: url) { result in
+                cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
                     switch result {
                     case .success:
                         cell.indicator.stopAnimating()
@@ -325,7 +368,7 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
                     case .failure(let error):
                         print("Error: \(error)")
                     }
-                }
+                })
             }
             break
         case SectionShelfView.BOOK_SOURCE_RAW:
@@ -338,7 +381,7 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
         default:
             if shelfItem.show && bookCover != "" {
                 let url = URL(string: "https://www.packtpub.com/sites/default/files/cover_1.png")!
-                cell.bookCover.kf.setImage(with: url) { result in
+                cell.bookCover.kf.setImage(with: url, completionHandler: { result in
                     switch result {
                     case .success:
                         cell.indicator.stopAnimating()
@@ -346,7 +389,7 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
                     case .failure(let error):
                         print("Error: \(error)")
                     }
-                }
+                })
             }
             break
         }
@@ -354,6 +397,31 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
         cell.bookBackground.isHidden = !shelfItem.show
         cell.spine.frame = CGRect(x: CGFloat(bookCoverMargin) / 2, y: CGFloat(bookCoverMargin), width: spineWidth, height: cell.bookCover.frame.height)
         
+        let bookIdHash = shelfItem.bookId.hashValue
+        optionsButtonTagMap[bookIdHash] = indexPath
+
+        cell.options.frame = CGRect(x: cell.bookCover.frame.maxX - 48, y: cell.bookCover.frame.maxY - 36, width: 64, height: 32)
+        cell.options.removeTarget(nil, action: nil, for: .touchUpInside)
+        cell.options.addTarget(self, action: #selector(optionsActionSection(sender:)), for: .touchUpInside)
+        cell.options.tag = bookIdHash
+        
+        cell.refresh.frame = CGRect(x: cell.bookCover.frame.minX + 12, y: cell.bookCover.frame.maxY - 28, width: 20, height: 24)
+        cell.refresh.removeTarget(nil, action: nil, for: .touchUpInside)
+        cell.refresh.addTarget(self, action: #selector(refreshActionSection(sender:)), for: .touchUpInside)
+        cell.refresh.tag = bookIdHash
+
+        cell.refresh.setImage(
+            Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())")?
+                .resizableImage(withCapInsets: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2), resizingMode: .stretch),
+            for: .normal)
+        
+        if shelfItem.bookProgress >= 100 {
+            cell.progress.text = "FIN"
+        } else {
+            cell.progress.text = "\(shelfItem.bookProgress)%"
+        }
+        cell.progress.frame = CGRect(x: cell.bookCover.frame.maxX - 40, y: cell.bookCover.frame.minY + 4, width: 36, height: 24)
+
         return cell
     }
     
@@ -386,4 +454,34 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
             delegate.onBookClicked(self, section: section, index: position, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle)
         }
     }
+    
+    @objc func optionsActionSection(sender: UIButton) {
+        guard let indexPath = optionsButtonTagMap[sender.tag] else { return }
+        print("optionsActionSection \(indexPath)")
+        if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
+            let sectionItem = shelfModelSection[indexPath.section]
+            let shelfItem = sectionItem.sectionShelf[indexPath.item]
+            if shelfItem.show {
+                let frameInSuperView = cell.convert(cell.options.frame, to: self)
+                
+                delegate.onBookLongClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
+                
+            }
+        }
+    }
+    
+    @objc func refreshActionSection(sender: UIButton) {
+        guard let indexPath = optionsButtonTagMap[sender.tag] else { return }
+        print("refreshActionSection \(indexPath)")
+        if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
+            let sectionItem = shelfModelSection[indexPath.section]
+            let shelfItem = sectionItem.sectionShelf[indexPath.item]
+            if shelfItem.show {
+                let frameInSuperView = cell.convert(cell.options.frame, to: self)
+                delegate.onBookRefreshClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
+            }
+        }
+    }
+}
+extension SectionShelfView: UIGestureRecognizerDelegate {
 }

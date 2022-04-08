@@ -89,6 +89,17 @@ public class PlainShelfView: UIView {
         shelfView.showsVerticalScrollIndicator = false
         shelfView.showsHorizontalScrollIndicator = false
         shelfView.backgroundColor = UIColor("#C49E7A")
+        
+        let longPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(gesture:)))
+        longPressGestureRecognizer.delegate = self
+        longPressGestureRecognizer.delaysTouchesBegan = true
+        shelfView.addGestureRecognizer(longPressGestureRecognizer)
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTap(gesture:)))
+        tapGestureRecognizer.delegate = self
+        tapGestureRecognizer.delaysTouchesEnded = true
+        shelfView.addGestureRecognizer(tapGestureRecognizer)
+        
         addSubview(shelfView)
         
         layout.minimumLineSpacing = 0
@@ -108,11 +119,11 @@ public class PlainShelfView: UIView {
     }
     
     private func loadEmptyShelfBlocks(type: String) {
-        shelfModel.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", show: false, type: type))
+        shelfModel.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, bookStatus: .READY, sectionId: "", show: false, type: type))
     }
     
-    private func loadFilledShelfBlocks(bookCoverSource: String, bookId: String, bookTitle: String, type: String) {
-        shelfModel.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, show: true, type: type))
+    private func loadFilledShelfBlocks(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, bookStatus: BookModel.BookStatus, type: String) {
+        shelfModel.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, bookStatus: bookStatus, sectionId: "default", show: true, type: type))
     }
     
     public func reloadBooks(bookModel: [BookModel]) {
@@ -132,14 +143,24 @@ public class PlainShelfView: UIView {
             let bookCoverSource = bookModel[i].bookCoverSource
             let bookId = bookModel[i].bookId
             let bookTitle = bookModel[i].bookTitle
+            let bookProgress = bookModel[i].bookProgress
+            let bookStatus = bookModel[i].bookStatus
             
+            var type = PlainShelfView.CENTER
             if (i % numberOfTilesPerRow) == 0 {
-                loadFilledShelfBlocks(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, type: PlainShelfView.START)
+                type = PlainShelfView.START
             } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                loadFilledShelfBlocks(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, type: PlainShelfView.END)
-            } else {
-                loadFilledShelfBlocks(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, type: PlainShelfView.CENTER)
+                type = PlainShelfView.END
             }
+            
+            loadFilledShelfBlocks(
+                bookCoverSource: bookCoverSource,
+                bookId: bookId,
+                bookTitle: bookTitle,
+                bookProgress: bookProgress,
+                bookStatus: bookStatus,
+                type: type
+            )
         }
         
         buildShelf(sizeOfModel: bookModel.count)
@@ -190,6 +211,51 @@ public class PlainShelfView: UIView {
         
         shelfView.reloadData()
     }
+    
+    @objc func handleTap(gesture: UITapGestureRecognizer?) {
+        guard let gesture = gesture, gesture.state == .ended else { return }
+        print("Tap")
+        
+        let location = gesture.location(in: shelfView)
+        
+        guard let indexPath = shelfView.indexPathForItem(at: location),
+              let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView
+        else { return }
+        
+        let shelfItem = shelfModel[indexPath.row]
+        guard shelfItem.show else { return }
+        
+        let frameInShelfView = cell.options.convert(cell.options.frame, to: shelfView)
+        let locationinOption = gesture.location(in: cell.options)
+        let locationinRefresh = gesture.location(in: cell.refresh)
+        
+        if locationinOption.x > cell.options.frame.width / 4,
+           locationinOption.x < cell.options.frame.width / 4 * 3,
+           locationinOption.y > 0,
+           locationinOption.y < cell.options.frame.height {
+            delegate.onBookLongClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInShelfView)
+        } else if locationinRefresh.x > 0,
+                  locationinRefresh.x < cell.refresh.frame.width,
+                  locationinRefresh.y > 0,
+                  locationinRefresh.y < cell.refresh.frame.height {
+            delegate.onBookRefreshClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInShelfView)
+        } else {
+            delegate.onBookClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle)
+        }
+    }
+    
+    @objc func handleLongPress(gesture: UILongPressGestureRecognizer?) {
+        guard let gesture = gesture, gesture.state == .began else { return }
+        print("Long Pressed")
+        let location = gesture.location(in: shelfView)
+        if let indexPath = shelfView.indexPathForItem(at: location), let cell = shelfView.cellForItem(at: indexPath) {
+            let shelfItem = shelfModel[indexPath.row]
+            if shelfItem.show {
+                let frameInSuperView = shelfView.convert(cell.frame, to: self)
+                delegate.onBookLongClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
+            }
+        }
+    }
 }
 
 extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
@@ -199,7 +265,6 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         let bookCover = shelfItem.bookCoverSource.trim()
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ShelfCellView.identifier, for: indexPath) as! ShelfCellView
-        cell.shelfBackground.frame = CGRect(x: 0, y: 0, width: trueGridItemWidth, height: Double(gridItemHeight))
         cell.shelfBackground.contentMode = .scaleToFill
         
         switch shelfItem.type {
@@ -215,9 +280,6 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         }
         
         cell.bookCover.kf.indicatorType = .none
-        cell.bookBackground.frame = CGRect(x: (trueGridItemWidth - Dimens.bookWidth) / 2, y: bookBackgroundMarignTop, width: Dimens.bookWidth, height: Dimens.bookHeight)
-        cell.bookCover.frame = CGRect(x: bookCoverMargin / 2, y: bookCoverMargin, width: Dimens.bookWidth - bookCoverMargin, height: Dimens.bookHeight - bookCoverMargin)
-        cell.indicator.frame = CGRect(x: (Dimens.bookWidth - indicatorWidth) / 2, y: (Dimens.bookHeight - indicatorWidth) / 2, width: indicatorWidth, height: indicatorWidth)
         cell.indicator.startAnimating()
         
         switch bookSource {
@@ -260,7 +322,7 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         case PlainShelfView.BOOK_SOURCE_URL:
             if shelfItem.show && bookCover != "" {
                 let url = URL(string: bookCover)!
-                cell.bookCover.kf.setImage(with: url) { result in
+                cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
                     switch result {
                     case .success:
                         cell.indicator.stopAnimating()
@@ -268,7 +330,7 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
                     case .failure(let error):
                         print("Error: \(error)")
                     }
-                }
+                })
             }
             break
         case PlainShelfView.BOOK_SOURCE_RAW:
@@ -281,7 +343,7 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         default:
             if shelfItem.show && bookCover != "" {
                 let url = URL(string: "https://www.packtpub.com/sites/default/files/cover_1.png")!
-                cell.bookCover.kf.setImage(with: url) { result in
+                cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
                     switch result {
                     case .success:
                         cell.indicator.stopAnimating()
@@ -289,13 +351,24 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
                     case .failure(let error):
                         print("Error: \(error)")
                     }
-                }
+                })
             }
             break
         }
         
         cell.bookBackground.isHidden = !shelfItem.show
-        cell.spine.frame = CGRect(x: CGFloat(bookCoverMargin) / 2, y: CGFloat(bookCoverMargin), width: spineWidth, height: cell.bookCover.frame.height)
+
+        cell.refresh.setImage(
+            Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())")?
+                .resizableImage(withCapInsets: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2), resizingMode: .stretch),
+            for: .normal
+        )
+
+        if shelfItem.bookProgress >= 100 {
+            cell.progress.text = "FIN"
+        } else {
+            cell.progress.text = "\(shelfItem.bookProgress)%"
+        }
         
         return cell
     }
@@ -304,10 +377,32 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         return shelfModel.count
     }
     
-    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let position = indexPath.row
-        if shelfModel[position].show {
-            delegate.onBookClicked(self, index: position, bookId: shelfModel[position].bookId, bookTitle: shelfModel[position].bookTitle)
+    @objc func optionsActionPlain(sender: UIButton) {
+        print("optionsActionPlain \(sender.tag)")
+        let position = sender.tag
+        let indexPath = IndexPath(row: position, section: 0)
+        if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
+            let shelfItem = shelfModel[indexPath.row]
+            if shelfItem.show {
+                let frameInSuperView = cell.convert(cell.options.frame, to: self)
+                delegate.onBookOptionsClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
+            }
         }
     }
+    
+    @objc func refreshActionSection(sender: UIButton) {
+        print("refreshActionSection \(sender.tag)")
+        let position = sender.tag
+        let indexPath = IndexPath(row: position, section: 0)
+        if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
+            let shelfItem = shelfModel[indexPath.row]
+            if shelfItem.show {
+                let frameInSuperView = cell.convert(cell.options.frame, to: self)
+                delegate.onBookRefreshClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
+            }
+        }
+    }
+}
+
+extension PlainShelfView: UIGestureRecognizerDelegate {
 }

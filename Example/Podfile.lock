@@ -1,13 +1,15 @@
 PODS:
-  - Kingfisher (5.0.1)
+  - Kingfisher (5.15.8):
+    - Kingfisher/Core (= 5.15.8)
+  - Kingfisher/Core (5.15.8)
   - ShelfView (1.1):
-    - Kingfisher (~> 5.0)
+    - Kingfisher (~> 5.15)
 
 DEPENDENCIES:
   - ShelfView (from `../`)
 
 SPEC REPOS:
-  https://github.com/cocoapods/specs.git:
+  trunk:
     - Kingfisher
 
 EXTERNAL SOURCES:
@@ -15,9 +17,9 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  Kingfisher: 4f771421b9208185217550528a06fd48756cb7c2
-  ShelfView: 9ca6d37cf8d92b39b2e7d44c3f798aebd00da1ba
+  Kingfisher: a3c03d702433fa6cfedabb2bddbe076fb8f2e902
+  ShelfView: 061c446b435f5201befc1b32817b75786efa9777
 
 PODFILE CHECKSUM: bcca6e02436573d29fd62d0bb8934cf4a1245178
 
-COCOAPODS: 1.5.3
+COCOAPODS: 1.10.1
