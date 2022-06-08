@@ -228,19 +228,39 @@ public class PlainShelfView: UIView {
         let frameInShelfView = cell.options.convert(cell.options.frame, to: shelfView)
         let locationinOption = gesture.location(in: cell.options)
         let locationinRefresh = gesture.location(in: cell.refresh)
+        let locationInProgress = gesture.location(in: cell.progress)
+        let locationInCover = gesture.location(in: cell.bookCover)
         
         if locationinOption.x > cell.options.frame.width / 4,
            locationinOption.x < cell.options.frame.width / 4 * 3,
            locationinOption.y > 0,
            locationinOption.y < cell.options.frame.height {
             delegate.onBookLongClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInShelfView)
-        } else if locationinRefresh.x > 0,
-                  locationinRefresh.x < cell.refresh.frame.width,
-                  locationinRefresh.y > 0,
-                  locationinRefresh.y < cell.refresh.frame.height {
+            return
+        }
+        
+        if locationinRefresh.x > 0,
+           locationinRefresh.x < cell.refresh.frame.width,
+           locationinRefresh.y > 0,
+           locationinRefresh.y < cell.refresh.frame.height {
             delegate.onBookRefreshClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInShelfView)
-        } else {
+            return
+        }
+        
+        if locationInProgress.x > 0,
+           locationInProgress.x < cell.progress.frame.width,
+           locationInProgress.y > 0,
+           locationInProgress.y < cell.progress.frame.height {
+            delegate.onBookProgressClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInShelfView)
+            return
+        }
+        
+        if locationInCover.x > 0,
+           locationInCover.x < cell.bookCover.frame.width,
+           locationInCover.y > 0,
+           locationInCover.y < cell.bookCover.frame.height {
             delegate.onBookClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle)
+            return
         }
     }
     
