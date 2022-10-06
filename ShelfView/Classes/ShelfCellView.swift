@@ -12,7 +12,8 @@ class ShelfCellView: UICollectionViewCell {
     let shelfBackground = UIImageView()
     let bookBackground = UIView()
     
-    var bookCover = UIImageView()
+    let bookCover = UIImageView()
+    let bookTitle = UILabel()
     let indicator = UIActivityIndicatorView()
     let spine = UIImageView()
     let options = UIButton()
@@ -30,6 +31,7 @@ class ShelfCellView: UICollectionViewCell {
         addSubview(bookBackground)
         
         bookBackground.addSubview(bookCover)
+        bookBackground.addSubview(bookTitle)
         bookBackground.addSubview(spine)
         bookBackground.addSubview(indicator)
         bookBackground.addSubview(options)
@@ -72,23 +74,32 @@ class ShelfCellView: UICollectionViewCell {
         
         bookCover.translatesAutoresizingMaskIntoConstraints = false
         
-        NSLayoutConstraint.activate(
-            [
-                shelfBackground.leadingAnchor.constraint(equalTo: leadingAnchor),
-                shelfBackground.trailingAnchor.constraint(equalTo: trailingAnchor),
-                shelfBackground.topAnchor.constraint(equalTo: topAnchor),
-                shelfBackground.bottomAnchor.constraint(equalTo: bottomAnchor)
-            ] + [
-                bookBackground.heightAnchor.constraint(equalTo: heightAnchor, constant: -Dimens.bookBackgroundMargin),
-                bookBackground.centerXAnchor.constraint(equalTo: shelfBackground.centerXAnchor),
-                bookBackground.centerYAnchor.constraint(equalTo: shelfBackground.centerYAnchor)
-            ] + [
-                bookCover.heightAnchor.constraint(equalTo: bookBackground.heightAnchor, constant: -Dimens.bookCoverMargin),
-                bookCover.widthAnchor.constraint(equalTo: bookCover.heightAnchor, multiplier: Dimens.bookCoverAspect),
-                bookCover.centerXAnchor.constraint(equalTo: shelfBackground.centerXAnchor),
-                bookCover.centerYAnchor.constraint(equalTo: shelfBackground.centerYAnchor)
-            ]
-        )
+        bookTitle.translatesAutoresizingMaskIntoConstraints = false
+        bookTitle.numberOfLines = 0
+        bookTitle.lineBreakMode = .byWordWrapping
+        bookTitle.font = .systemFont(ofSize: 14, weight: .medium)
+        bookTitle.textAlignment = .center
+        
+        NSLayoutConstraint.activate([
+            shelfBackground.leadingAnchor.constraint(equalTo: leadingAnchor),
+            shelfBackground.trailingAnchor.constraint(equalTo: trailingAnchor),
+            shelfBackground.topAnchor.constraint(equalTo: topAnchor),
+            shelfBackground.bottomAnchor.constraint(equalTo: bottomAnchor),
+            
+            bookBackground.heightAnchor.constraint(equalTo: heightAnchor, constant: -Dimens.bookBackgroundMargin),
+            bookBackground.centerXAnchor.constraint(equalTo: shelfBackground.centerXAnchor),
+            bookBackground.centerYAnchor.constraint(equalTo: shelfBackground.centerYAnchor),
+            
+            bookCover.heightAnchor.constraint(equalTo: bookBackground.heightAnchor, constant: -Dimens.bookCoverMargin),
+            bookCover.widthAnchor.constraint(equalTo: bookCover.heightAnchor, multiplier: Dimens.bookCoverAspect),
+            bookCover.centerXAnchor.constraint(equalTo: shelfBackground.centerXAnchor),
+            bookCover.centerYAnchor.constraint(equalTo: shelfBackground.centerYAnchor),
+            
+            bookTitle.heightAnchor.constraint(equalTo: bookCover.heightAnchor),
+            bookTitle.widthAnchor.constraint(equalTo: bookCover.widthAnchor),
+            bookTitle.centerXAnchor.constraint(equalTo: bookCover.centerXAnchor),
+            bookTitle.centerYAnchor.constraint(equalTo: bookCover.centerYAnchor)
+        ])
         
         spine.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([

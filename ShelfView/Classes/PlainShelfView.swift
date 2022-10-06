@@ -286,6 +286,7 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ShelfCellView.identifier, for: indexPath) as! ShelfCellView
         cell.shelfBackground.contentMode = .scaleToFill
+        cell.bookTitle.text = shelfItem.bookTitle
         
         switch shelfItem.type {
         case PlainShelfView.START:
@@ -343,14 +344,29 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
             if shelfItem.show && bookCover != "" {
                 let url = URL(string: bookCover)!
                 cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
+                    cell.indicator.stopAnimating()
                     switch result {
                     case .success:
                         cell.indicator.stopAnimating()
                         cell.spine.isHidden = false
+                        cell.bookTitle.isHidden = true
+                        cell.refresh.setImage(
+                            Utils().loadImage(name: "icon-book-\(shelfItem.bookStatus.rawValue.lowercased())")?
+                                .resizableImage(withCapInsets: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2), resizingMode: .stretch),
+                            for: .normal
+                        )
                     case .failure(let error):
+                        cell.spine.isHidden = true
+                        cell.bookTitle.isHidden = false
+                        cell.refresh.setImage(
+                            Utils().loadImage(name: "icon-book-\(BookModel.BookStatus.NOCONNECT.rawValue.lowercased())")?
+                                .resizableImage(withCapInsets: UIEdgeInsets(top: 2, left: 2, bottom: 2, right: 2), resizingMode: .stretch),
+                            for: .normal
+                        )
                         print("Error: \(error)")
                     }
                 })
+                
             }
             break
         case PlainShelfView.BOOK_SOURCE_RAW:
