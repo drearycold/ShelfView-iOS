@@ -19,6 +19,7 @@ class ShelfCellView: UICollectionViewCell {
     let options = UIButton()
     let progress = UILabel()
     let refresh = UIButton()
+    let select = UIButton()
     
     override var canBecomeFirstResponder: Bool {
         true
@@ -37,6 +38,7 @@ class ShelfCellView: UICollectionViewCell {
         bookBackground.addSubview(options)
         bookBackground.addSubview(progress)
         bookBackground.addSubview(refresh)
+        bookBackground.addSubview(select)
         
         bookCover.layer.shadowColor = UIColor.black.cgColor
         bookCover.layer.shadowRadius = 10
@@ -67,6 +69,12 @@ class ShelfCellView: UICollectionViewCell {
         progress.layer.backgroundColor = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 0.4).cgColor
         progress.layer.cornerRadius = 8
         progress.layer.masksToBounds = true
+        
+        select.isHidden = true
+        let imgConfig = UIImage.SymbolConfiguration(weight: .bold)
+        
+        select.setImage(.init(systemName: "circle", withConfiguration: imgConfig), for: .normal)
+        select.setImage(.init(systemName: "checkmark.circle", withConfiguration: imgConfig), for: .selected)
         
         shelfBackground.translatesAutoresizingMaskIntoConstraints = false
         shelfBackground.contentMode = .scaleToFill
@@ -139,6 +147,14 @@ class ShelfCellView: UICollectionViewCell {
             indicator.centerYAnchor.constraint(equalTo: bookCover.centerYAnchor),
             indicator.widthAnchor.constraint(equalToConstant: 50),
             indicator.heightAnchor.constraint(equalToConstant: 50)
+        ])
+        
+        select.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            select.leadingAnchor.constraint(equalTo: bookCover.leadingAnchor, constant: 4),
+            select.topAnchor.constraint(equalTo: bookCover.topAnchor, constant: 4),
+            select.widthAnchor.constraint(equalToConstant: 32),
+            select.heightAnchor.constraint(equalToConstant: 32)
         ])
     }
     

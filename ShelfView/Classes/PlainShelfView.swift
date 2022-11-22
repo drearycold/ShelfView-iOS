@@ -27,6 +27,7 @@ public class PlainShelfView: UIView {
     
     private var bookModel = [BookModel]()
     private var shelfModel = [ShelfModel]()
+    public var selectedBookIndex = Set<IndexPath>()
     
     private var bookSource = BOOK_SOURCE_URL
     
@@ -212,6 +213,16 @@ public class PlainShelfView: UIView {
         shelfView.reloadData()
     }
     
+    public func setEditing(_ editing: Bool) {
+        self.shelfView.isEditing = editing
+        
+        if editing {
+            self.selectedBookIndex.removeAll(keepingCapacity: true)
+        }
+        
+        self.shelfView.reloadData()
+    }
+    
     @objc func handleTap(gesture: UITapGestureRecognizer?) {
         guard let gesture = gesture, gesture.state == .ended else { return }
         print("Tap")
@@ -230,6 +241,16 @@ public class PlainShelfView: UIView {
         let locationinRefresh = gesture.location(in: cell.refresh)
         let locationInProgress = gesture.location(in: cell.progress)
         let locationInCover = gesture.location(in: cell.bookCover)
+        
+        if shelfView.isEditing {
+            cell.select.isSelected.toggle()
+            if cell.select.isSelected {
+                selectedBookIndex.insert(indexPath)
+            } else {
+                selectedBookIndex.remove(indexPath)
+            }
+            return
+        }
         
         if locationinOption.x > cell.options.frame.width / 4,
            locationinOption.x < cell.options.frame.width / 4 * 3,
@@ -406,6 +427,9 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
             cell.progress.text = "\(shelfItem.bookProgress)%"
         }
         
+        cell.select.isSelected = self.selectedBookIndex.contains(indexPath)
+        cell.select.isHidden = !collectionView.isEditing
+        
         return cell
     }
     
@@ -437,6 +461,29 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
                 delegate.onBookRefreshClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
             }
         }
+    }
+    
+    public override func selectAll(_ sender: Any?) {
+        let selectedCount = self.selectedBookIndex.count
+        self.selectedBookIndex.formUnion(
+            (0..<self.bookModel.count).map {
+                IndexPath(row: $0, section: 0)
+            }
+        )
+        if selectedCount != self.selectedBookIndex.count {
+            self.shelfView.reloadData()
+        }
+    }
+    
+    @objc public func clearSelection(_ sender: Any?) {
+        if selectedBookIndex.isEmpty == false {
+            self.selectedBookIndex.removeAll(keepingCapacity: true)
+            self.shelfView.reloadData()
+        }
+    }
+    
+    public override func delete(_ sender: Any?) {
+        
     }
 }
 

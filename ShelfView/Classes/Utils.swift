@@ -34,7 +34,11 @@ extension UIColor {
     }
 }
 
-class Utils {
+public class Utils {
+    public init() {
+        
+    }
+    
     func delay(_ delay: Double, closure: @escaping () -> ()) {
         DispatchQueue.main.asyncAfter(
             deadline: DispatchTime.now() + Double(Int64(delay * Double(NSEC_PER_SEC))) / Double(NSEC_PER_SEC),
@@ -42,7 +46,7 @@ class Utils {
         )
     }
 
-    func loadImage(name: String) -> UIImage? {
+    public func loadImage(name: String) -> UIImage? {
         #if SWIFT_PACKAGE
         if let image = UIImage(named: name, in: Bundle.module, compatibleWith: nil) {
             return image
