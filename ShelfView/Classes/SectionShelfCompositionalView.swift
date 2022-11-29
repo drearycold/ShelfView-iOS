@@ -9,41 +9,10 @@
 import Kingfisher
 import UIKit
 
-public class SectionShelfCompositionalView: UIView {
-    static let sectionHeaderElementKind = "section-header-element-kind"
-
-    private let indicatorWidth = Double(50)
-    private let bookBackgroundMarignTop = Double(23)
-    private let headerReferenceSizeHeight = CGFloat(50)
-    
-    public static let BOOK_SOURCE_DEVICE_DOCUMENTS = 1
-    public static let BOOK_SOURCE_DEVICE_LIBRARY = 2
-    public static let BOOK_SOURCE_DEVICE_CACHE = 3
-    public static let BOOK_SOURCE_URL = 4
-    public static let BOOK_SOURCE_RAW = 5
-    
-    private static let START = "start"
-    private static let END = "end"
-    private static let CENTER = "center"
-    
-    private var shelfModelSection = [ShelfModelSection]()
-    
-    private var bookSource = BOOK_SOURCE_URL
-    
-    private var numberOfTilesPerRow: Int!
-    private var numberOfRowsPerScreen: Int!
-    private var shelfHeight: Int!
-    private var shelfWidth: Int!
-    private let gridItemWidth = Dimens.gridItemWidth
-    private let gridItemHeight = Dimens.gridItemHeight
-    private var shelfView: UICollectionView!
+public class SectionShelfCompositionalView: ShelfView {
     private var shelfViewDataSource: UICollectionViewDiffableDataSource<ShelfModelSection, ShelfModel>! = nil
 
-    private var trueGridItemWidth: Double!
-    
-    private let utils = Utils()
     public weak var delegate: SectionShelfCompositionalViewDelegate!
-    private var viewHasBeenInitialized = false
     
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -97,25 +66,15 @@ public class SectionShelfCompositionalView: UIView {
             let shelfItem = item
             let bookCover = shelfItem.bookCoverSource.trim()
             
-            switch shelfItem.type {
-            case SectionShelfCompositionalView.START:
-                cell.shelfBackground.image = utils.loadImage(name: "left")
-                break
-            case SectionShelfCompositionalView.END:
-                cell.shelfBackground.image = utils.loadImage(name: "right")
-                break
-            default:
-                cell.shelfBackground.image = utils.loadImage(name: "center")
-                break
-            }
+            cell.shelfBackground.image = utils.loadImage(name: shelfItem.type.rawValue)
             
             cell.bookCover.kf.indicatorType = .none
             cell.indicator.startAnimating()
             
-            switch bookSource {
-            case SectionShelfView.BOOK_SOURCE_DEVICE_CACHE:
-                if shelfItem.show && bookCover != "" {
-                    let paths = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true)
+            if shelfItem.show && bookCover != "" {
+                switch bookSource {
+                case .deviceCache, .deviceLibrary, .deviceDocuments:
+                    let paths = NSSearchPathForDirectoriesInDomains(bookSource.searchPathDirectory, .userDomainMask, true)
                     if let dirPath = paths.first {
                         let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
                         let image = UIImage(contentsOfFile: imageURL.path)
@@ -123,67 +82,26 @@ public class SectionShelfCompositionalView: UIView {
                         cell.indicator.stopAnimating()
                         cell.spine.isHidden = false
                     }
-                }
-                break
-            case SectionShelfView.BOOK_SOURCE_DEVICE_LIBRARY:
-                if shelfItem.show && bookCover != "" {
-                    let paths = NSSearchPathForDirectoriesInDomains(.libraryDirectory, .userDomainMask, true)
-                    if let dirPath = paths.first {
-                        let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
-                        let image = UIImage(contentsOfFile: imageURL.path)
-                        cell.bookCover.image = image
+                case .url:
+                    if shelfItem.show && bookCover != "" {
+                        let url = URL(string: bookCover)!
+                        cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
+                            switch result {
+                            case .success:
+                                cell.indicator.stopAnimating()
+                                cell.spine.isHidden = false
+                            case .failure(let error):
+                                print("Error: \(error)")
+                            }
+                        })
+                    }
+                case .raw:
+                    if shelfItem.show && bookCover != "" {
+                        cell.bookCover.image = UIImage(named: bookCover)
                         cell.indicator.stopAnimating()
                         cell.spine.isHidden = false
                     }
                 }
-                break
-            case SectionShelfView.BOOK_SOURCE_DEVICE_DOCUMENTS:
-                if shelfItem.show && bookCover != "" {
-                    let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-                    if let dirPath = paths.first {
-                        let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
-                        let image = UIImage(contentsOfFile: imageURL.path)
-                        cell.bookCover.image = image
-                        cell.indicator.stopAnimating()
-                        cell.spine.isHidden = false
-                    }
-                }
-                break
-            case SectionShelfView.BOOK_SOURCE_URL:
-                if shelfItem.show && bookCover != "" {
-                    let url = URL(string: bookCover)!
-                    cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
-                        switch result {
-                        case .success:
-                            cell.indicator.stopAnimating()
-                            cell.spine.isHidden = false
-                        case .failure(let error):
-                            print("Error: \(error)")
-                        }
-                    })
-                }
-                break
-            case SectionShelfView.BOOK_SOURCE_RAW:
-                if shelfItem.show && bookCover != "" {
-                    cell.bookCover.image = UIImage(named: bookCover)
-                    cell.indicator.stopAnimating()
-                    cell.spine.isHidden = false
-                }
-                break
-            default:
-                if shelfItem.show && bookCover != "" {
-                    let url = URL(string: "https://www.packtpub.com/sites/default/files/cover_1.png")!
-                    cell.bookCover.kf.setImage(with: url, completionHandler: { result in
-                        switch result {
-                        case .success:
-                            cell.indicator.stopAnimating()
-                            cell.spine.isHidden = false
-                        case .failure(let error):
-                            print("Error: \(error)")
-                        }
-                    })
-                }
-                break
             }
             
             cell.bookBackground.isHidden = !shelfItem.show
@@ -202,6 +120,9 @@ public class SectionShelfCompositionalView: UIView {
             cell.refresh.isHidden = true
             cell.progress.isHidden = shelfItem.bookProgress == 0
             cell.options.isHidden = true
+            
+            cell.select.isSelected = self.selectedBookIds.contains(shelfItem.bookId)
+            cell.select.isHidden = !self.shelfView.isEditing
         }
         
         let headerRegistration = UICollectionView.SupplementaryRegistration
@@ -230,6 +151,11 @@ public class SectionShelfCompositionalView: UIView {
         longPressGestureRecognizer.delegate = self
         longPressGestureRecognizer.delaysTouchesBegan = true
         shelfView.addGestureRecognizer(longPressGestureRecognizer)
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTap(gesture:)))
+        tapGestureRecognizer.delegate = self
+        tapGestureRecognizer.delaysTouchesEnded = true
+        shelfView.addGestureRecognizer(tapGestureRecognizer)
         
         addSubview(shelfView)
         
@@ -289,8 +215,8 @@ public class SectionShelfCompositionalView: UIView {
         buildShelf()
 
         for i in 0..<shelfModelSection.count {
-            shelfModelSection[i].sectionShelf[0].type = SectionShelfCompositionalView.START
-            shelfModelSection[i].sectionShelf[shelfModelSection[i].sectionShelf.count - 1].type = SectionShelfCompositionalView.END
+            shelfModelSection[i].sectionShelf[0].type = .left
+            shelfModelSection[i].sectionShelf[shelfModelSection[i].sectionShelf.count - 1].type = .right
         }
         
         var snapshot = NSDiffableDataSourceSnapshot<ShelfModelSection, ShelfModel>()
@@ -313,7 +239,7 @@ public class SectionShelfCompositionalView: UIView {
                     sectionId: "section-\(row)",
                     sectionShelf: (0 ..< (numberOfTilesPerRow ?? 9)).map {
                         var shelfModel = ShelfModel()
-                        shelfModel.type = SectionShelfCompositionalView.CENTER
+                        shelfModel.type = .center
                         shelfModel.bookId = "row-\(row)-\($0)"
                         return shelfModel
                     }
@@ -336,7 +262,45 @@ public class SectionShelfCompositionalView: UIView {
             }
         }
     }
-
+    
+    @objc func handleTap(gesture: UITapGestureRecognizer?) {
+        guard let gesture = gesture, gesture.state == .ended else { return }
+        print("Tap")
+        
+        let location = gesture.location(in: shelfView)
+        
+        guard let indexPath = shelfView.indexPathForItem(at: location),
+              let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView
+        else { return }
+        
+        let sectionItem = shelfModelSection[indexPath.section]
+        let shelfItem = sectionItem.sectionShelf[indexPath.row]
+        guard shelfItem.show else { return }
+        
+        let frameInShelfView = cell.options.convert(cell.options.frame, to: shelfView)
+        let locationinOption = gesture.location(in: cell.options)
+        let locationinRefresh = gesture.location(in: cell.refresh)
+        let locationInProgress = gesture.location(in: cell.progress)
+        let locationInCover = gesture.location(in: cell.bookCover)
+        
+        if shelfView.isEditing {
+            cell.select.isSelected.toggle()
+            if cell.select.isSelected {
+                selectedBookIds.insert(shelfItem.bookId)
+            } else {
+                selectedBookIds.remove(shelfItem.bookId)
+            }
+            return
+        }
+        
+        if locationInCover.x > 0,
+           locationInCover.x < cell.bookCover.frame.width,
+           locationInCover.y > 0,
+           locationInCover.y < cell.bookCover.frame.height {
+            delegate.onBookClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle)
+            return
+        }
+    }
 }
 
 extension SectionShelfCompositionalView: UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {

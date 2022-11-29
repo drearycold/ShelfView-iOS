@@ -8,40 +8,13 @@
 import Kingfisher
 import UIKit
 
-public class SectionShelfView: UIView {
-    private let indicatorWidth = Double(50)
-    private let bookCoverMargin = Double(10)
-    private let spineWidth = CGFloat(8)
-    private let bookBackgroundMarignTop = Double(23)
-    private let headerReferenceSizeHeight = CGFloat(50)
-    
-    public static let BOOK_SOURCE_DEVICE_DOCUMENTS = 1
-    public static let BOOK_SOURCE_DEVICE_LIBRARY = 2
-    public static let BOOK_SOURCE_DEVICE_CACHE = 3
-    public static let BOOK_SOURCE_URL = 4
-    public static let BOOK_SOURCE_RAW = 5
-    
-    private static let START = "start"
-    private static let END = "end"
-    private static let CENTER = "center"
-    
+public class SectionShelfView: ShelfView {
     private var bookModelSection = [BookModelSection]()
-    private var shelfModelSection = [ShelfModelSection]()
     private var optionsButtonTagMap = [Int:IndexPath]()
     
-    private var bookSource = BOOK_SOURCE_URL
-    
-    private var numberOfTilesPerRow: Int!
-    private var shelfHeight: Int!
-    private var shelfWidth: Int!
-    private let gridItemWidth = Dimens.gridItemWidth
-    private let gridItemHeight = Dimens.gridItemHeight
-    private var shelfView: UICollectionView!
-    private var trueGridItemWidth: Double!
     private let layout = UICollectionViewFlowLayout()
-    private let utils = Utils()
+    
     public weak var delegate: SectionShelfViewDelegate!
-    private var viewHasBeenInitialized = false
     
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -55,7 +28,7 @@ public class SectionShelfView: UIView {
         initializeShelfView(width: frame.width, height: frame.height)
     }
     
-    public convenience init(frame: CGRect, bookModelSection: [BookModelSection], bookSource: Int) {
+    public convenience init(frame: CGRect, bookModelSection: [BookModelSection], bookSource: ShelfViewBookSource) {
         self.init(frame: frame)
         utils.delay(0) {
             self.bookSource = bookSource
@@ -149,15 +122,15 @@ public class SectionShelfView: UIView {
                     bookStatus: sectionBooks[j].bookStatus,
                     sectionId: sectionId,
                     show: true,
-                    type: ""
+                    type: .center
                 )
                 
                 if (j % numberOfTilesPerRow) == 0 {
-                    shelfModel.type = SectionShelfView.START
+                    shelfModel.type = .left
                 } else if (j % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                    shelfModel.type = SectionShelfView.END
+                    shelfModel.type = .right
                 } else {
-                    shelfModel.type = SectionShelfView.CENTER
+                    shelfModel.type = .center
                 }
                 shelfModelArray.append(shelfModel)
                 
@@ -171,9 +144,9 @@ public class SectionShelfView: UIView {
                         for i in 0 ..< fillUp {
                             var shelfModel = ShelfModel()
                             if i == (fillUp - 1) {
-                                shelfModel.type = SectionShelfView.END
+                                shelfModel.type = .right
                             } else {
-                                shelfModel.type = SectionShelfView.CENTER
+                                shelfModel.type = .center
                             }
                             shelfModelArray.append(shelfModel)
                         }
@@ -190,11 +163,11 @@ public class SectionShelfView: UIView {
                         for i in 0 ..< numberOfTilesPerRow {
                             var shelfModel = ShelfModel()
                             if i == 0 {
-                                shelfModel.type = SectionShelfView.START
+                                shelfModel.type = .left
                             } else if i == (numberOfTilesPerRow - 1) {
-                                shelfModel.type = SectionShelfView.END
+                                shelfModel.type = .right
                             } else {
-                                shelfModel.type = SectionShelfView.CENTER
+                                shelfModel.type = .center
                             }
                             shelfModelArray.append(shelfModel)
                         }
@@ -203,11 +176,11 @@ public class SectionShelfView: UIView {
                         for i in 0 ..< fillUp {
                             var shelfModel = ShelfModel()
                             if (i % numberOfTilesPerRow) == 0 {
-                                shelfModel.type = SectionShelfView.START
+                                shelfModel.type = .left
                             } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                                shelfModel.type = SectionShelfView.END
+                                shelfModel.type = .right
                             } else {
-                                shelfModel.type = SectionShelfView.CENTER
+                                shelfModel.type = .center
                             }
                             shelfModelArray.append(shelfModel)
                         }
@@ -232,9 +205,9 @@ public class SectionShelfView: UIView {
             for i in 0 ..< fillUp {
                 var shelfModel = ShelfModel()
                 if i == (fillUp - 1) {
-                    shelfModel.type = SectionShelfView.END
+                    shelfModel.type = .right
                 } else {
-                    shelfModel.type = SectionShelfView.CENTER
+                    shelfModel.type = .center
                 }
                 shelfModelArray.append(shelfModel)
             }
@@ -247,11 +220,11 @@ public class SectionShelfView: UIView {
                 for i in 0 ..< numberOfTilesPerRow {
                     var shelfModel = ShelfModel()
                     if i == 0 {
-                        shelfModel.type = SectionShelfView.START
+                        shelfModel.type = .left
                     } else if i == (numberOfTilesPerRow - 1) {
-                        shelfModel.type = SectionShelfView.END
+                        shelfModel.type = .right
                     } else {
-                        shelfModel.type = SectionShelfView.CENTER
+                        shelfModel.type = .center
                     }
                     shelfModelArray.append(shelfModel)
                 }
@@ -260,11 +233,11 @@ public class SectionShelfView: UIView {
                 for i in 0 ..< fillUp {
                     var shelfModel = ShelfModel()
                     if (i % numberOfTilesPerRow) == 0 {
-                        shelfModel.type = SectionShelfView.START
+                        shelfModel.type = .left
                     } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                        shelfModel.type = SectionShelfView.END
+                        shelfModel.type = .right
                     } else {
-                        shelfModel.type = SectionShelfView.CENTER
+                        shelfModel.type = .center
                     }
                     shelfModelArray.append(shelfModel)
                 }
@@ -302,17 +275,7 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
         cell.shelfBackground.frame = CGRect(x: 0, y: 0, width: trueGridItemWidth, height: Double(gridItemHeight))
         cell.shelfBackground.contentMode = .scaleToFill
         
-        switch shelfItem.type {
-        case SectionShelfView.START:
-            cell.shelfBackground.image = utils.loadImage(name: "left")
-            break
-        case SectionShelfView.END:
-            cell.shelfBackground.image = utils.loadImage(name: "right")
-            break
-        default:
-            cell.shelfBackground.image = utils.loadImage(name: "center")
-            break
-        }
+        cell.shelfBackground.image = utils.loadImage(name: shelfItem.type.rawValue)
         
         cell.bookCover.kf.indicatorType = .none
         cell.bookBackground.frame = CGRect(x: (trueGridItemWidth - Dimens.bookWidth) / 2, y: bookBackgroundMarignTop, width: Dimens.bookWidth, height: Dimens.bookHeight)
@@ -320,10 +283,10 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
         cell.indicator.frame = CGRect(x: (Dimens.bookWidth - indicatorWidth) / 2, y: (Dimens.bookHeight - indicatorWidth) / 2, width: indicatorWidth, height: indicatorWidth)
         cell.indicator.startAnimating()
         
-        switch bookSource {
-        case SectionShelfView.BOOK_SOURCE_DEVICE_CACHE:
-            if shelfItem.show && bookCover != "" {
-                let paths = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true)
+        if shelfItem.show && bookCover != "" {
+            switch bookSource {
+            case .deviceCache, .deviceLibrary, .deviceDocuments:
+                let paths = NSSearchPathForDirectoriesInDomains(bookSource.searchPathDirectory, .userDomainMask, true)
                 if let dirPath = paths.first {
                     let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
                     let image = UIImage(contentsOfFile: imageURL.path)
@@ -331,34 +294,7 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
                     cell.indicator.stopAnimating()
                     cell.spine.isHidden = false
                 }
-            }
-            break
-        case SectionShelfView.BOOK_SOURCE_DEVICE_LIBRARY:
-            if shelfItem.show && bookCover != "" {
-                let paths = NSSearchPathForDirectoriesInDomains(.libraryDirectory, .userDomainMask, true)
-                if let dirPath = paths.first {
-                    let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
-                    let image = UIImage(contentsOfFile: imageURL.path)
-                    cell.bookCover.image = image
-                    cell.indicator.stopAnimating()
-                    cell.spine.isHidden = false
-                }
-            }
-            break
-        case SectionShelfView.BOOK_SOURCE_DEVICE_DOCUMENTS:
-            if shelfItem.show && bookCover != "" {
-                let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-                if let dirPath = paths.first {
-                    let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
-                    let image = UIImage(contentsOfFile: imageURL.path)
-                    cell.bookCover.image = image
-                    cell.indicator.stopAnimating()
-                    cell.spine.isHidden = false
-                }
-            }
-            break
-        case SectionShelfView.BOOK_SOURCE_URL:
-            if shelfItem.show && bookCover != "" {
+            case .url:
                 let url = URL(string: bookCover)!
                 cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
                     switch result {
@@ -369,29 +305,11 @@ extension SectionShelfView: UICollectionViewDelegate, UICollectionViewDataSource
                         print("Error: \(error)")
                     }
                 })
-            }
-            break
-        case SectionShelfView.BOOK_SOURCE_RAW:
-            if shelfItem.show && bookCover != "" {
+            case .raw:
                 cell.bookCover.image = UIImage(named: bookCover)
                 cell.indicator.stopAnimating()
                 cell.spine.isHidden = false
             }
-            break
-        default:
-            if shelfItem.show && bookCover != "" {
-                let url = URL(string: "https://www.packtpub.com/sites/default/files/cover_1.png")!
-                cell.bookCover.kf.setImage(with: url, completionHandler: { result in
-                    switch result {
-                    case .success:
-                        cell.indicator.stopAnimating()
-                        cell.spine.isHidden = false
-                    case .failure(let error):
-                        print("Error: \(error)")
-                    }
-                })
-            }
-            break
         }
         
         cell.bookBackground.isHidden = !shelfItem.show

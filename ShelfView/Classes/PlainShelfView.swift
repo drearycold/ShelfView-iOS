@@ -9,39 +9,14 @@
 import Kingfisher
 import UIKit
 
-public class PlainShelfView: UIView {
-    private let indicatorWidth = Double(50)
-    private let bookCoverMargin = Double(10)
-    private let spineWidth = CGFloat(8)
-    private let bookBackgroundMarignTop = Double(23)
-    
-    public static let BOOK_SOURCE_DEVICE_DOCUMENTS = 1
-    public static let BOOK_SOURCE_DEVICE_LIBRARY = 2
-    public static let BOOK_SOURCE_DEVICE_CACHE = 3
-    public static let BOOK_SOURCE_URL = 4
-    public static let BOOK_SOURCE_RAW = 5
-    
-    private static let START = "start"
-    private static let END = "end"
-    private static let CENTER = "center"
+public class PlainShelfView: ShelfView {
     
     private var bookModel = [BookModel]()
-    private var shelfModel = [ShelfModel]()
-    public var selectedBookIndex = Set<IndexPath>()
+//    private var shelfModel = [ShelfModel]()
     
-    private var bookSource = BOOK_SOURCE_URL
-    
-    private var numberOfTilesPerRow: Int!
-    private var shelfHeight: Int!
-    private var shelfWidth: Int!
-    private let gridItemWidth = Dimens.gridItemWidth
-    private let gridItemHeight = Dimens.gridItemHeight
-    private var shelfView: UICollectionView!
-    private var trueGridItemWidth: Double!
     private let layout = UICollectionViewFlowLayout()
-    private let utils = Utils()
+
     public weak var delegate: PlainShelfViewDelegate!
-    private var viewHasBeenInitialized = false
     
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -52,10 +27,11 @@ public class PlainShelfView: UIView {
         if Int(frame.width) < gridItemWidth {
             fatalError("ShelfView width cannot be less than \(gridItemWidth)")
         }
+        shelfModelSection.append(.init(sectionName: "Default", sectionId: "default", sectionShelf: []))
         initializeShelfView(width: frame.width, height: frame.height)
     }
     
-    public convenience init(frame: CGRect, bookModel: [BookModel], bookSource: Int) {
+    public convenience init(frame: CGRect, bookModel: [BookModel], bookSource: ShelfViewBookSource) {
         self.init(frame: frame)
         utils.delay(0) {
             self.bookSource = bookSource
@@ -119,12 +95,12 @@ public class PlainShelfView: UIView {
         viewHasBeenInitialized = true
     }
     
-    private func loadEmptyShelfBlocks(type: String) {
-        shelfModel.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, bookStatus: .READY, sectionId: "", show: false, type: type))
+    private func loadEmptyShelfBlocks(type: ShelfViewTileType) {
+        shelfModelSection[0].sectionShelf.append(ShelfModel(bookCoverSource: "", bookId: "", bookTitle: "", bookProgress: 0, bookStatus: .READY, sectionId: "", show: false, type: type))
     }
     
-    private func loadFilledShelfBlocks(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, bookStatus: BookModel.BookStatus, type: String) {
-        shelfModel.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, bookStatus: bookStatus, sectionId: "default", show: true, type: type))
+    private func loadFilledShelfBlocks(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, bookStatus: BookModel.BookStatus, type: ShelfViewTileType) {
+        shelfModelSection[0].sectionShelf.append(ShelfModel(bookCoverSource: bookCoverSource, bookId: bookId, bookTitle: bookTitle, bookProgress: bookProgress, bookStatus: bookStatus, sectionId: "default", show: true, type: type))
     }
     
     public func reloadBooks(bookModel: [BookModel]) {
@@ -138,7 +114,7 @@ public class PlainShelfView: UIView {
     }
     
     private func processData() {
-        shelfModel.removeAll()
+        shelfModelSection[0].sectionShelf.removeAll()
         
         for i in 0 ..< bookModel.count {
             let bookCoverSource = bookModel[i].bookCoverSource
@@ -147,11 +123,11 @@ public class PlainShelfView: UIView {
             let bookProgress = bookModel[i].bookProgress
             let bookStatus = bookModel[i].bookStatus
             
-            var type = PlainShelfView.CENTER
+            var type = ShelfViewTileType.center
             if (i % numberOfTilesPerRow) == 0 {
-                type = PlainShelfView.START
+                type = .left
             } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                type = PlainShelfView.END
+                type = .right
             }
             
             loadFilledShelfBlocks(
@@ -176,9 +152,9 @@ public class PlainShelfView: UIView {
             let fillUp = numberOfTilesPerRow - remainderTiles
             for i in 0 ..< fillUp {
                 if i == (fillUp - 1) {
-                    loadEmptyShelfBlocks(type: PlainShelfView.END)
+                    loadEmptyShelfBlocks(type: .right)
                 } else {
-                    loadEmptyShelfBlocks(type: PlainShelfView.CENTER)
+                    loadEmptyShelfBlocks(type: .center)
                 }
             }
         }
@@ -189,38 +165,28 @@ public class PlainShelfView: UIView {
             if remainderRowHeight == 0 {
                 for i in 0 ..< numberOfTilesPerRow {
                     if i == 0 {
-                        loadEmptyShelfBlocks(type: PlainShelfView.START)
+                        loadEmptyShelfBlocks(type: .left)
                     } else if i == (numberOfTilesPerRow - 1) {
-                        loadEmptyShelfBlocks(type: PlainShelfView.END)
+                        loadEmptyShelfBlocks(type: .right)
                     } else {
-                        loadEmptyShelfBlocks(type: PlainShelfView.CENTER)
+                        loadEmptyShelfBlocks(type: .center)
                     }
                 }
             } else if remainderRowHeight > 0 {
                 let fillUp = numberOfTilesPerRow * (remainderRowHeight + 1)
                 for i in 0 ..< fillUp {
                     if (i % numberOfTilesPerRow) == 0 {
-                        loadEmptyShelfBlocks(type: PlainShelfView.START)
+                        loadEmptyShelfBlocks(type: .left)
                     } else if (i % numberOfTilesPerRow) == (numberOfTilesPerRow - 1) {
-                        loadEmptyShelfBlocks(type: PlainShelfView.END)
+                        loadEmptyShelfBlocks(type: .right)
                     } else {
-                        loadEmptyShelfBlocks(type: PlainShelfView.CENTER)
+                        loadEmptyShelfBlocks(type: .center)
                     }
                 }
             }
         }
         
         shelfView.reloadData()
-    }
-    
-    public func setEditing(_ editing: Bool) {
-        self.shelfView.isEditing = editing
-        
-        if editing {
-            self.selectedBookIndex.removeAll(keepingCapacity: true)
-        }
-        
-        self.shelfView.reloadData()
     }
     
     @objc func handleTap(gesture: UITapGestureRecognizer?) {
@@ -233,7 +199,7 @@ public class PlainShelfView: UIView {
               let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView
         else { return }
         
-        let shelfItem = shelfModel[indexPath.row]
+        let shelfItem = shelfModelSection[0].sectionShelf[indexPath.row]
         guard shelfItem.show else { return }
         
         let frameInShelfView = cell.options.convert(cell.options.frame, to: shelfView)
@@ -245,9 +211,9 @@ public class PlainShelfView: UIView {
         if shelfView.isEditing {
             cell.select.isSelected.toggle()
             if cell.select.isSelected {
-                selectedBookIndex.insert(indexPath)
+                selectedBookIds.insert(shelfItem.bookId)
             } else {
-                selectedBookIndex.remove(indexPath)
+                selectedBookIds.remove(shelfItem.bookId)
             }
             return
         }
@@ -290,7 +256,7 @@ public class PlainShelfView: UIView {
         print("Long Pressed")
         let location = gesture.location(in: shelfView)
         if let indexPath = shelfView.indexPathForItem(at: location), let cell = shelfView.cellForItem(at: indexPath) {
-            let shelfItem = shelfModel[indexPath.row]
+            let shelfItem = shelfModelSection[0].sectionShelf[indexPath.row]
             if shelfItem.show {
                 let frameInSuperView = shelfView.convert(cell.frame, to: self)
                 delegate.onBookLongClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
@@ -302,32 +268,22 @@ public class PlainShelfView: UIView {
 extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let position = indexPath.row
-        let shelfItem = shelfModel[position]
+        let shelfItem = shelfModelSection[0].sectionShelf[position]
         let bookCover = shelfItem.bookCoverSource.trim()
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ShelfCellView.identifier, for: indexPath) as! ShelfCellView
         cell.shelfBackground.contentMode = .scaleToFill
         cell.bookTitle.text = shelfItem.bookTitle
         
-        switch shelfItem.type {
-        case PlainShelfView.START:
-            cell.shelfBackground.image = utils.loadImage(name: "left")
-            break
-        case PlainShelfView.END:
-            cell.shelfBackground.image = utils.loadImage(name: "right")
-            break
-        default:
-            cell.shelfBackground.image = utils.loadImage(name: "center")
-            break
-        }
+        cell.shelfBackground.image = utils.loadImage(name: shelfItem.type.rawValue)
         
         cell.bookCover.kf.indicatorType = .none
         cell.indicator.startAnimating()
         
-        switch bookSource {
-        case PlainShelfView.BOOK_SOURCE_DEVICE_CACHE:
-            if shelfItem.show && bookCover != "" {
-                let paths = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true)
+        if shelfItem.show && bookCover != "" {
+            switch bookSource {
+            case .deviceCache, .deviceLibrary, .deviceDocuments:
+                let paths = NSSearchPathForDirectoriesInDomains(bookSource.searchPathDirectory, .userDomainMask, true)
                 if let dirPath = paths.first {
                     let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
                     let image = UIImage(contentsOfFile: imageURL.path)
@@ -335,34 +291,7 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
                     cell.indicator.stopAnimating()
                     cell.spine.isHidden = false
                 }
-            }
-            break
-        case PlainShelfView.BOOK_SOURCE_DEVICE_LIBRARY:
-            if shelfItem.show && bookCover != "" {
-                let paths = NSSearchPathForDirectoriesInDomains(.libraryDirectory, .userDomainMask, true)
-                if let dirPath = paths.first {
-                    let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
-                    let image = UIImage(contentsOfFile: imageURL.path)
-                    cell.bookCover.image = image
-                    cell.indicator.stopAnimating()
-                    cell.spine.isHidden = false
-                }
-            }
-            break
-        case PlainShelfView.BOOK_SOURCE_DEVICE_DOCUMENTS:
-            if shelfItem.show && bookCover != "" {
-                let paths = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-                if let dirPath = paths.first {
-                    let imageURL = URL(fileURLWithPath: dirPath).appendingPathComponent(bookCover)
-                    let image = UIImage(contentsOfFile: imageURL.path)
-                    cell.bookCover.image = image
-                    cell.indicator.stopAnimating()
-                    cell.spine.isHidden = false
-                }
-            }
-            break
-        case PlainShelfView.BOOK_SOURCE_URL:
-            if shelfItem.show && bookCover != "" {
+            case .url:
                 let url = URL(string: bookCover)!
                 cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
                     cell.indicator.stopAnimating()
@@ -387,30 +316,11 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
                         print("Error: \(error)")
                     }
                 })
-                
-            }
-            break
-        case PlainShelfView.BOOK_SOURCE_RAW:
-            if shelfItem.show && bookCover != "" {
+            case .raw:
                 cell.bookCover.image = UIImage(named: bookCover)
                 cell.indicator.stopAnimating()
                 cell.spine.isHidden = false
             }
-            break
-        default:
-            if shelfItem.show && bookCover != "" {
-                let url = URL(string: "https://www.packtpub.com/sites/default/files/cover_1.png")!
-                cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
-                    switch result {
-                    case .success:
-                        cell.indicator.stopAnimating()
-                        cell.spine.isHidden = false
-                    case .failure(let error):
-                        print("Error: \(error)")
-                    }
-                })
-            }
-            break
         }
         
         cell.bookBackground.isHidden = !shelfItem.show
@@ -427,14 +337,14 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
             cell.progress.text = "\(shelfItem.bookProgress)%"
         }
         
-        cell.select.isSelected = self.selectedBookIndex.contains(indexPath)
+        cell.select.isSelected = self.selectedBookIds.contains(shelfItem.bookId)
         cell.select.isHidden = !collectionView.isEditing
         
         return cell
     }
     
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return shelfModel.count
+        return shelfModelSection[0].sectionShelf.count
     }
     
     @objc func optionsActionPlain(sender: UIButton) {
@@ -442,7 +352,7 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         let position = sender.tag
         let indexPath = IndexPath(row: position, section: 0)
         if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
-            let shelfItem = shelfModel[indexPath.row]
+            let shelfItem = shelfModelSection[0].sectionShelf[indexPath.row]
             if shelfItem.show {
                 let frameInSuperView = cell.convert(cell.options.frame, to: self)
                 delegate.onBookOptionsClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
@@ -455,35 +365,12 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
         let position = sender.tag
         let indexPath = IndexPath(row: position, section: 0)
         if let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView {
-            let shelfItem = shelfModel[indexPath.row]
+            let shelfItem = shelfModelSection[0].sectionShelf[indexPath.row]
             if shelfItem.show {
                 let frameInSuperView = cell.convert(cell.options.frame, to: self)
                 delegate.onBookRefreshClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
             }
         }
-    }
-    
-    public override func selectAll(_ sender: Any?) {
-        let selectedCount = self.selectedBookIndex.count
-        self.selectedBookIndex.formUnion(
-            (0..<self.bookModel.count).map {
-                IndexPath(row: $0, section: 0)
-            }
-        )
-        if selectedCount != self.selectedBookIndex.count {
-            self.shelfView.reloadData()
-        }
-    }
-    
-    @objc public func clearSelection(_ sender: Any?) {
-        if selectedBookIndex.isEmpty == false {
-            self.selectedBookIndex.removeAll(keepingCapacity: true)
-            self.shelfView.reloadData()
-        }
-    }
-    
-    public override func delete(_ sender: Any?) {
-        
     }
 }
 
