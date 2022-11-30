@@ -114,7 +114,7 @@ public struct ShelfModel: Hashable {
 public struct ShelfModelSection: Hashable {
     public var sectionName: String
     public var sectionId: String
-    var sectionShelf: [ShelfModel]
+    public var sectionShelf: [ShelfModel]
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(sectionId)

@@ -10,16 +10,6 @@ import Foundation
 public class ShelfView: UIView {
     static let sectionHeaderElementKind = "section-header-element-kind"
 
-    public static let BOOK_SOURCE_DEVICE_DOCUMENTS = 1
-    public static let BOOK_SOURCE_DEVICE_LIBRARY = 2
-    public static let BOOK_SOURCE_DEVICE_CACHE = 3
-    public static let BOOK_SOURCE_URL = 4
-    public static let BOOK_SOURCE_RAW = 5
-    
-    static let START = "start"
-    static let END = "end"
-    static let CENTER = "center"
-    
     let indicatorWidth = Double(50)
     let bookCoverMargin = Double(10)
     let spineWidth = CGFloat(8)

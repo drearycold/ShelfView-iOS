@@ -202,7 +202,7 @@ public class PlainShelfView: ShelfView {
         let shelfItem = shelfModelSection[0].sectionShelf[indexPath.row]
         guard shelfItem.show else { return }
         
-        let frameInShelfView = cell.options.convert(cell.options.frame, to: shelfView)
+        let frameInShelfView = cell.options.convert(cell.options.frame, to: shelfView).offsetBy(dx: -8, dy: -cell.options.frame.height*2-16)
         let locationinOption = gesture.location(in: cell.options)
         let locationinRefresh = gesture.location(in: cell.refresh)
         let locationInProgress = gesture.location(in: cell.progress)
@@ -222,7 +222,7 @@ public class PlainShelfView: ShelfView {
            locationinOption.x < cell.options.frame.width / 4 * 3,
            locationinOption.y > 0,
            locationinOption.y < cell.options.frame.height {
-            delegate.onBookLongClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInShelfView)
+            delegate.onBookOptionsClicked(self, index: indexPath.row, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInShelfView)
             return
         }
         
