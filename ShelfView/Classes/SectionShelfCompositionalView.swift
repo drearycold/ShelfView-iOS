@@ -67,7 +67,8 @@ public class SectionShelfCompositionalView: ShelfView {
             let bookCover = shelfItem.bookCoverSource.trim()
             
             cell.shelfBackground.image = utils.loadImage(name: shelfItem.type.rawValue)
-            
+            cell.bookTitle.text = shelfItem.bookTitle
+
             cell.bookCover.kf.indicatorType = .none
             cell.indicator.startAnimating()
             
@@ -86,11 +87,14 @@ public class SectionShelfCompositionalView: ShelfView {
                     if shelfItem.show && bookCover != "" {
                         let url = URL(string: bookCover)!
                         cell.bookCover.kf.setImage(with: url, completionHandler:  { result in
+                            cell.indicator.stopAnimating()
                             switch result {
                             case .success:
-                                cell.indicator.stopAnimating()
                                 cell.spine.isHidden = false
+                                cell.bookTitle.isHidden = true
                             case .failure(let error):
+                                cell.spine.isHidden = true
+                                cell.bookTitle.isHidden = false
                                 print("Error: \(error)")
                             }
                         })

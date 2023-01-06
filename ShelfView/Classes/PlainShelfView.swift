@@ -297,7 +297,6 @@ extension PlainShelfView: UICollectionViewDelegate, UICollectionViewDataSource, 
                     cell.indicator.stopAnimating()
                     switch result {
                     case .success:
-                        cell.indicator.stopAnimating()
                         cell.spine.isHidden = false
                         cell.bookTitle.isHidden = true
                         cell.refresh.setImage(
