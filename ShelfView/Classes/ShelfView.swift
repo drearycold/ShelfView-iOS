@@ -18,6 +18,11 @@ public class ShelfView: UIView {
 
     var numberOfTilesPerRow: Int!
     var numberOfRowsPerScreen: Int!
+    
+    public var grids: CGSize {
+        .init(width: numberOfTilesPerRow, height: numberOfRowsPerScreen)
+    }
+    
     var shelfHeight: Int!
     var shelfWidth: Int!
     let gridItemWidth = Dimens.gridItemWidth

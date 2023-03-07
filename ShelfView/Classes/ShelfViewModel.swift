@@ -68,8 +68,8 @@ public struct ShelfModel: Hashable {
     var bookStatus: BookModel.BookStatus
     var sectionId: String
     
-    var show: Bool
-    var type: ShelfViewTileType
+    public var show: Bool
+    public var type: ShelfViewTileType
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(bookId)
@@ -90,6 +90,18 @@ public struct ShelfModel: Hashable {
 
         show = false
         type = .center
+    }
+    
+    public init(bookId: String, sectionId: String, show: Bool, type: ShelfViewTileType) {
+        self.bookId = bookId
+        self.show = show
+        self.type = type
+        self.sectionId = sectionId
+
+        bookCoverSource = ""
+        bookTitle = ""
+        bookProgress = 0
+        bookStatus = .READY
     }
     
     public init(bookCoverSource: String, bookId: String, bookTitle: String, bookProgress: Int, bookStatus: BookModel.BookStatus, sectionId: String, show: Bool = true, type: ShelfViewTileType = .center) {

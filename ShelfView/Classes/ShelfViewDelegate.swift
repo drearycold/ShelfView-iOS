@@ -31,6 +31,7 @@ public protocol SectionShelfViewDelegate: AnyObject {
     func onBookRefreshClicked(_ shelfView: SectionShelfView, section: Int, index: Int, sectionId: String, sectionTitle: String, bookId: String, bookTitle: String, frame inShelfView: CGRect)
 }
 
+@available(iOS 15.0, *)
 public protocol SectionShelfCompositionalViewDelegate: AnyObject {
     func onBookClicked(_ shelfView: SectionShelfCompositionalView, section: Int, index: Int, sectionId: String, sectionTitle: String, bookId: String, bookTitle: String)
     

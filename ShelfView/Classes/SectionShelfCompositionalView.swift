@@ -9,6 +9,7 @@
 import Kingfisher
 import UIKit
 
+@available(iOS 15.0, *)
 public class SectionShelfCompositionalView: ShelfView {
     private var shelfViewDataSource: UICollectionViewDiffableDataSource<ShelfModelSection, ShelfModel>! = nil
 
@@ -132,7 +133,7 @@ public class SectionShelfCompositionalView: ShelfView {
         let headerRegistration = UICollectionView.SupplementaryRegistration
         <ShelfHeaderCellView>(elementKind: SectionShelfCompositionalView.sectionHeaderElementKind) {
             header, elementKind, indexPath in
-            header.headerLabel.text = self.shelfModelSection[indexPath.section].sectionName
+            header.headerLabel.text = self.shelfViewDataSource.sectionIdentifier(for: indexPath.section)?.sectionName
         }
         shelfViewDataSource = UICollectionViewDiffableDataSource<ShelfModelSection, ShelfModel>(collectionView: shelfView) {
             (collectionView: UICollectionView, indexPath: IndexPath, identifier: ShelfModel) -> UICollectionViewCell? in
@@ -144,7 +145,6 @@ public class SectionShelfCompositionalView: ShelfView {
         }
         shelfView.dataSource = shelfViewDataSource
         
-        shelfView.delegate = self
         shelfView.alwaysBounceVertical = false
         shelfView.bounces = false
         shelfView.showsVerticalScrollIndicator = false
@@ -182,11 +182,10 @@ public class SectionShelfCompositionalView: ShelfView {
             )
             
             var itemWidth = self.trueGridItemWidth ?? 0
-            if sectionIndex < self.shelfModelSection.count,
-               self.shelfModelSection[sectionIndex].sectionShelf.count * Int(itemWidth) < self.shelfWidth {
-                itemWidth = Double(self.shelfWidth) / Double(self.shelfModelSection[sectionIndex].sectionShelf.count)
+            if sectionIndex < self.shelfViewDataSource.numberOfSections(in: self.shelfView),
+               self.shelfViewDataSource.collectionView(self.shelfView, numberOfItemsInSection: sectionIndex) * Int(itemWidth) < self.shelfWidth {
+                itemWidth = Double(self.shelfWidth) / Double(self.shelfViewDataSource.collectionView(self.shelfView, numberOfItemsInSection: sectionIndex))
             }
-//            self.shelfSectionItemWidth[sectionIndex] = itemWidth
             
             let group = NSCollectionLayoutGroup.horizontal(
                 layoutSize: NSCollectionLayoutSize(
@@ -233,7 +232,7 @@ public class SectionShelfCompositionalView: ShelfView {
         shelfViewDataSource.apply(snapshot, animatingDifferences: true)
     }
     
-    private func buildShelf() {
+    public func buildShelf() {
         guard shelfModelSection.count < numberOfRowsPerScreen ?? 9 else { return }
         
         (shelfModelSection.count..<(numberOfRowsPerScreen ?? 9)).forEach { row in
@@ -252,19 +251,35 @@ public class SectionShelfCompositionalView: ShelfView {
         }
     }
     
+    public func applyDataSourceSnapshot(snapshot: NSDiffableDataSourceSnapshot<ShelfModelSection, ShelfModel>) {
+        shelfViewDataSource.apply(snapshot, animatingDifferences: true)
+    }
+    
     @objc func handleLongPress(gesture: UILongPressGestureRecognizer?) {
         guard let gesture = gesture, gesture.state == .began else { return }
         print("Long Pressed")
         let location = gesture.location(in: shelfView)
-        if let indexPath = shelfView.indexPathForItem(at: location), let cell = shelfView.cellForItem(at: indexPath) {
-            let sectionItem = shelfModelSection[indexPath.section]
-            let shelfItem = sectionItem.sectionShelf[indexPath.item]
-            if shelfItem.show {
-                let frameInSuperView = shelfView.convert(cell.frame, to: self)
-                delegate.onBookLongClicked(self, section: indexPath.section, index: indexPath.row, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle, frame: frameInSuperView)
-                
-            }
+        
+        guard let indexPath = shelfView.indexPathForItem(at: location),
+           let cell = shelfView.cellForItem(at: indexPath),
+           let sectionItem = self.shelfViewDataSource.sectionIdentifier(for: indexPath.section),
+           let shelfItem = self.shelfViewDataSource.itemIdentifier(for: indexPath),
+           shelfItem.show
+        else {
+            return
         }
+               
+        let frameInSuperView = shelfView.convert(cell.frame, to: self)
+        delegate.onBookLongClicked(
+            self,
+            section: indexPath.section,
+            index: indexPath.row,
+            sectionId: sectionItem.sectionId,
+            sectionTitle: sectionItem.sectionName,
+            bookId: shelfItem.bookId,
+            bookTitle: shelfItem.bookTitle,
+            frame: frameInSuperView
+        )
     }
     
     @objc func handleTap(gesture: UITapGestureRecognizer?) {
@@ -274,17 +289,14 @@ public class SectionShelfCompositionalView: ShelfView {
         let location = gesture.location(in: shelfView)
         
         guard let indexPath = shelfView.indexPathForItem(at: location),
-              let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView
-        else { return }
+              let cell = shelfView.cellForItem(at: indexPath) as? ShelfCellView,
+              let sectionItem = self.shelfViewDataSource.sectionIdentifier(for: indexPath.section),
+              let shelfItem = self.shelfViewDataSource.itemIdentifier(for: indexPath),
+              shelfItem.show
+        else {
+            return
+        }
         
-        let sectionItem = shelfModelSection[indexPath.section]
-        let shelfItem = sectionItem.sectionShelf[indexPath.row]
-        guard shelfItem.show else { return }
-        
-        let frameInShelfView = cell.options.convert(cell.options.frame, to: shelfView)
-        let locationinOption = gesture.location(in: cell.options)
-        let locationinRefresh = gesture.location(in: cell.refresh)
-        let locationInProgress = gesture.location(in: cell.progress)
         let locationInCover = gesture.location(in: cell.bookCover)
         
         if shelfView.isEditing {
@@ -307,25 +319,6 @@ public class SectionShelfCompositionalView: ShelfView {
     }
 }
 
-extension SectionShelfCompositionalView: UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
-    public func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return shelfModelSection.count
-    }
-    
-    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return shelfModelSection[section].sectionShelf.count
-    }
-    
-    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let section = indexPath.section
-        let position = indexPath.row
-        let sectionItem = shelfModelSection[section]
-        let shelfItem = sectionItem.sectionShelf[position]
-        if shelfItem.show {
-            delegate.onBookClicked(self, section: section, index: position, sectionId: sectionItem.sectionId, sectionTitle: sectionItem.sectionName, bookId: shelfItem.bookId, bookTitle: shelfItem.bookTitle)
-        }
-    }
-
-}
+@available(iOS 15.0, *)
 extension SectionShelfCompositionalView: UIGestureRecognizerDelegate {
 }
