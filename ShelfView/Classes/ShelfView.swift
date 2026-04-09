@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 
 public class ShelfView: UIView {
     static let sectionHeaderElementKind = "section-header-element-kind"
